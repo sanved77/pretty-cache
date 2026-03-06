@@ -1,7 +1,8 @@
 import './App.css'
+import Dashboard from './Dashboard'
 
 function App() {
-  return <h1>hello world</h1>
+  return <Dashboard />
 }
 
 export default App
