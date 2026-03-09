@@ -3,9 +3,10 @@ import MonacoEditor from '@monaco-editor/react'
 export interface EditorProps {
   value: string
   onChange: (value: string) => void
+  wordWrap?: boolean
 }
 
-export default function ScratchPadEditor({ value, onChange }: EditorProps) {
+export default function ScratchPadEditor({ value, onChange, wordWrap = false }: EditorProps) {
   return (
     <MonacoEditor
       height="100%"
@@ -24,7 +25,7 @@ export default function ScratchPadEditor({ value, onChange }: EditorProps) {
         cursorBlinking: 'smooth',
         matchBrackets: 'always',
         automaticLayout: true,
-        wordWrap: 'off',
+        wordWrap: wordWrap ? 'on' : 'off',
       }}
       loading={null}
     />

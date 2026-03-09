@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { Box } from '@mui/material'
+import { useScratchpadNotes } from '../../../../hooks/useScratchpadNotes'
 import Toolbar from './Toolbar'
 import ScratchPadEditor from './Editor'
+import Footer from './Footer'
 
 function getWordCount(text: string): number {
   const trimmed = text.trim()
@@ -10,9 +12,20 @@ function getWordCount(text: string): number {
 }
 
 export default function ScratchPad() {
-  const [content, setContent] = useState('')
+  const { content, setContent } = useScratchpadNotes()
+  const [wordWrap, setWordWrap] = useState(false)
   const characterCount = content.length
   const wordCount = getWordCount(content)
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(content)
+  }
+  const handleClear = () => {
+    setContent('')
+  }
+  const handleWordWrapToggle = () => {
+    setWordWrap((w) => !w)
+  }
 
   return (
     <Box
@@ -25,10 +38,16 @@ export default function ScratchPad() {
         overflow: 'hidden',
       }}
     >
-      <Toolbar characterCount={characterCount} wordCount={wordCount} />
+      <Toolbar
+        onCopy={handleCopy}
+        onClear={handleClear}
+        onWordWrapToggle={handleWordWrapToggle}
+        wordWrap={wordWrap}
+      />
       <Box sx={{ flex: 1, minHeight: 0 }}>
-        <ScratchPadEditor value={content} onChange={setContent} />
+        <ScratchPadEditor value={content} onChange={setContent} wordWrap={wordWrap} />
       </Box>
+      <Footer wordCount={wordCount} characterCount={characterCount} />
     </Box>
   )
 }

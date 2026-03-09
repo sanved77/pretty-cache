@@ -1,26 +1,17 @@
-import { Box, Button, Divider, IconButton, MenuItem, Select, Typography } from '@mui/material'
-import Add from '@mui/icons-material/Add'
-import MoreVert from '@mui/icons-material/MoreVert'
-
-const DUMMY_NOTES = [
-  { id: '1', label: 'Note 1' },
-  { id: '2', label: 'Note 2' },
-  { id: 'auth', label: 'Auth Flow' },
-]
+import { Box, IconButton, Typography } from '@mui/material'
+import ContentCopy from '@mui/icons-material/ContentCopy'
+import WrapText from '@mui/icons-material/WrapText'
+import DeleteOutlined from '@mui/icons-material/DeleteOutlined'
+import EditNote from '@mui/icons-material/EditNote'
 
 export interface ToolbarProps {
-  characterCount: number
-  wordCount: number
-  selectedNoteId?: string
-  onNoteChange?: (noteId: string) => void
+  onCopy: () => void
+  onClear: () => void
+  onWordWrapToggle: () => void
+  wordWrap: boolean
 }
 
-export default function Toolbar({
-  characterCount,
-  wordCount,
-  selectedNoteId = DUMMY_NOTES[0].id,
-  onNoteChange,
-}: ToolbarProps) {
+export default function Toolbar({ onCopy, onClear, onWordWrapToggle, wordWrap }: ToolbarProps) {
   return (
     <Box
       sx={{
@@ -36,55 +27,39 @@ export default function Toolbar({
         flexShrink: 0,
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0 }}>
-        <Button
-          startIcon={<Add />}
-          onClick={() => {}}
-          sx={{
-            backgroundColor: 'var(--scratchpad-btn-primary-bg)',
-            color: 'var(--scratchpad-btn-primary-text)',
-            textTransform: 'none',
-            '&:hover': {
-              backgroundColor: 'var(--scratchpad-btn-primary-bg)',
-              opacity: 0.9,
-            },
-          }}
-        >
-          New
-        </Button>
-        <Divider orientation="vertical" flexItem sx={{ mx: 1, borderColor: 'var(--scratchpad-separator)' }} />
-        <Select
-          value={selectedNoteId}
-          onChange={(e) => onNoteChange?.(e.target.value)}
-          size="small"
-          displayEmpty
-          sx={{
-            color: 'var(--scratchpad-text-muted)',
-            minWidth: 160,
-            '& .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--scratchpad-separator)' },
-            '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--scratchpad-text-muted)' },
-            '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--scratchpad-text-muted)' },
-          }}
-        >
-          {DUMMY_NOTES.map((note) => (
-            <MenuItem key={note.id} value={note.id}>
-              {note.label}
-            </MenuItem>
-          ))}
-        </Select>
-      </Box>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <IconButton size="small" onClick={() => {}} sx={{ color: 'var(--scratchpad-text-muted)' }} aria-label="More options">
-          <MoreVert fontSize="small" />
+        <EditNote sx={{ fontSize: 20, color: 'var(--scratchpad-text-muted)' }} />
+        <Typography variant="subtitle1" sx={{ color: 'var(--scratchpad-text)', fontWeight: 600, fontSize: '1rem' }}>
+          ScratchPad
+        </Typography>
+      </Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <IconButton
+          size="small"
+          onClick={onCopy}
+          sx={{ color: 'var(--scratchpad-text-muted)' }}
+          aria-label="Copy"
+        >
+          <ContentCopy fontSize="small" />
         </IconButton>
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-          <Typography variant="caption" sx={{ color: 'var(--scratchpad-text-muted)', fontSize: 11, lineHeight: 1.2 }}>
-            Characters: {characterCount}
-          </Typography>
-          <Typography variant="caption" sx={{ color: 'var(--scratchpad-text-muted)', fontSize: 11, lineHeight: 1.2 }}>
-            Words: {wordCount}
-          </Typography>
-        </Box>
+        <IconButton
+          size="small"
+          onClick={onWordWrapToggle}
+          sx={{
+            color: wordWrap ? 'var(--sidebar-accent)' : 'var(--scratchpad-text-muted)',
+          }}
+          aria-label="Toggle word wrap"
+        >
+          <WrapText fontSize="small" />
+        </IconButton>
+        <IconButton
+          size="small"
+          onClick={onClear}
+          sx={{ color: 'var(--scratchpad-btn-clear)' }}
+          aria-label="Clear"
+        >
+          <DeleteOutlined fontSize="small" />
+        </IconButton>
       </Box>
     </Box>
   )
