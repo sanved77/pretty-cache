@@ -22,4 +22,6 @@
   /* Projects screen */
   --projects-bg: #0F1C22;
   --projects-metric-color: #0FA6F2;
+  --projects-inactive: #1E293B;
+  --projects-inactive-text: #94A3B8;
 }

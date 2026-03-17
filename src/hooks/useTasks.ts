@@ -111,6 +111,7 @@ export function useTasks(): {
   tasks: Task[]
   setTaskComplete: (taskId: string, isComplete: boolean) => void
   addTask: (params: { content: string; parentTaskId?: string; projectId: string }) => void
+  updateTask: (taskId: string, content: string) => void
 } {
   const [tasks, setTasks] = useState<Task[]>(() => getTasksFromStorage() ?? getFakeTasks())
 
@@ -159,5 +160,12 @@ export function useTasks(): {
     []
   )
 
-  return { tasks, setTaskComplete, addTask }
+  const updateTask = useCallback((taskId: string, content: string) => {
+    const trimmed = content.trim()
+    setTasks((prev) =>
+      prev.map((t) => (t.id !== taskId ? t : { ...t, content: trimmed }))
+    )
+  }, [])
+
+  return { tasks, setTaskComplete, addTask, updateTask }
 }
