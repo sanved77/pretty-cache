@@ -107,7 +107,11 @@ function getFakeTasks(): Task[] {
   ]
 }
 
-export function useTasks(): { tasks: Task[]; setTaskComplete: (taskId: string, isComplete: boolean) => void } {
+export function useTasks(): {
+  tasks: Task[]
+  setTaskComplete: (taskId: string, isComplete: boolean) => void
+  addTask: (params: { content: string; parentTaskId?: string; projectId: string }) => void
+} {
   const [tasks, setTasks] = useState<Task[]>(() => getTasksFromStorage() ?? getFakeTasks())
 
   useEffect(() => {
@@ -133,5 +137,27 @@ export function useTasks(): { tasks: Task[]; setTaskComplete: (taskId: string, i
     )
   }, [])
 
-  return { tasks, setTaskComplete }
+  const addTask = useCallback(
+    ({ content, parentTaskId, projectId }: { content: string; parentTaskId?: string; projectId: string }) => {
+      const newTask: Task = {
+        id: crypto.randomUUID(),
+        content: content.trim(),
+        createdOn: Date.now(),
+        projectID: projectId,
+        subTasks: [],
+      }
+      setTasks((prev) => {
+        const next = [...prev, newTask]
+        if (parentTaskId != null) {
+          return next.map((t) =>
+            t.id === parentTaskId ? { ...t, subTasks: [...(t.subTasks ?? []), newTask.id] } : t
+          )
+        }
+        return next
+      })
+    },
+    []
+  )
+
+  return { tasks, setTaskComplete, addTask }
 }

@@ -1,7 +1,10 @@
-import { useMemo } from 'react'
-import { Box, Chip, Typography } from '@mui/material'
+import { useMemo, useState } from 'react'
+import { Box, Chip, IconButton, Typography } from '@mui/material'
+import Add from '@mui/icons-material/Add'
 import type { Task } from '../../../../types/projects'
 import { isCompleted } from '../../../../utils/taskCompletion'
+import { TaskAddModeContext } from './TaskAddModeContext'
+import AddTaskInput from './AddTaskInput'
 import TaskItem from './TaskItem'
 
 function getProjectTaskIds(tasks: Task[], projectId: string): Set<string> {
@@ -50,9 +53,11 @@ export interface TasksPanelProps {
   tasks: Task[]
   projectId: string
   onTaskComplete?: (taskId: string, isComplete: boolean) => void
+  addTask?: (params: { content: string; parentTaskId?: string; projectId: string }) => void
 }
 
-export default function TasksPanel({ tasks, projectId, onTaskComplete }: TasksPanelProps) {
+export default function TasksPanel({ tasks, projectId, onTaskComplete, addTask }: TasksPanelProps) {
+  const [taskAddMode, setTaskAddMode] = useState<string | 'root' | undefined>(undefined)
   const taskMap = useMemo(() => new Map(tasks.map((t) => [t.id, t])), [tasks])
   const rootTasks = useMemo(() => getRootTasks(tasks, projectId), [tasks, projectId])
   const sortedRoots = useMemo(() => sortTasksIncompleteFirst(rootTasks, taskMap), [rootTasks, taskMap])
@@ -60,25 +65,57 @@ export default function TasksPanel({ tasks, projectId, onTaskComplete }: TasksPa
   const activeCount = total - completed
   const percent = total > 0 ? Math.round((completed / total) * 100) : 0
 
+  const handleAddTask = (content: string, parentTaskId?: string) => {
+    addTask?.({ content, parentTaskId, projectId })
+    setTaskAddMode(undefined)
+  }
+
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1, mb: 1 }}>
-        <Typography variant="h6" sx={{ color: 'var(--scratchpad-text)', fontWeight: 600 }}>
-          Tasks
+    <TaskAddModeContext.Provider value={{ taskAddMode, setTaskAddMode }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1, mb: 1 }}>
+          <Typography variant="h6" sx={{ color: 'var(--scratchpad-text)', fontWeight: 600 }}>
+            Tasks
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Chip label={`${activeCount} Active`} size="small" sx={{ bgcolor: 'var(--scratchpad-toolbar-bg)', color: 'var(--scratchpad-text-muted)' }} />
+            <Chip label={`${completed} Completed`} size="small" sx={{ bgcolor: 'var(--scratchpad-toolbar-bg)', color: 'var(--scratchpad-text-muted)' }} />
+          </Box>
+        </Box>
+        <Typography variant="body2" sx={{ color: 'var(--scratchpad-text-muted)', mb: 2 }}>
+          {percent}% complete
         </Typography>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Chip label={`${activeCount} Active`} size="small" sx={{ bgcolor: 'var(--scratchpad-toolbar-bg)', color: 'var(--scratchpad-text-muted)' }} />
-          <Chip label={`${completed} Completed`} size="small" sx={{ bgcolor: 'var(--scratchpad-toolbar-bg)', color: 'var(--scratchpad-text-muted)' }} />
+        <Box sx={{ flex: 1, overflow: 'auto' }}>
+          {sortedRoots.map((task) => (
+            <TaskItem
+              key={task.id}
+              task={task}
+              taskMap={taskMap}
+              onTaskComplete={onTaskComplete}
+              onAddTask={handleAddTask}
+              projectId={projectId}
+            />
+          ))}
+          {taskAddMode === 'root' ? (
+            <AddTaskInput
+              onSubmit={(content) => handleAddTask(content)}
+              onCancel={() => setTaskAddMode(undefined)}
+              centerRow
+            />
+          ) : (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 1 }}>
+              <IconButton
+                size="small"
+                onClick={() => setTaskAddMode('root')}
+                sx={{ color: 'var(--scratchpad-text-muted)' }}
+                aria-label="Add root task"
+              >
+                <Add fontSize="small" />
+              </IconButton>
+            </Box>
+          )}
         </Box>
       </Box>
-      <Typography variant="body2" sx={{ color: 'var(--scratchpad-text-muted)', mb: 2 }}>
-        {percent}% complete
-      </Typography>
-      <Box sx={{ flex: 1, overflow: 'auto' }}>
-        {sortedRoots.map((task) => (
-          <TaskItem key={task.id} task={task} taskMap={taskMap} onTaskComplete={onTaskComplete} />
-        ))}
-      </Box>
-    </Box>
+    </TaskAddModeContext.Provider>
   )
 }

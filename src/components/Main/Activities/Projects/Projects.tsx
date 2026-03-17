@@ -8,7 +8,7 @@ import QuestionsSection from './QuestionsSection'
 import LinksSection from './LinksSection'
 
 export default function Projects() {
-  const { tasks, setTaskComplete } = useTasks()
+  const { tasks, setTaskComplete, addTask } = useTasks()
   const { projects, setBlockerDismissed } = useProjects()
   const selectedProjectId = projects[0]?.id ?? ''
   const selectedProject = useMemo(() => projects.find((p) => p.id === selectedProjectId), [projects, selectedProjectId])
@@ -36,7 +36,7 @@ export default function Projects() {
           </>
         ) : null}
         <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-          <TasksPanel tasks={tasks} projectId={selectedProjectId} onTaskComplete={setTaskComplete} />
+          <TasksPanel tasks={tasks} projectId={selectedProjectId} onTaskComplete={setTaskComplete} addTask={addTask} />
         </Box>
       </Box>
       <Box sx={{ flex: '0 0 40%', minWidth: 0, overflow: 'auto', p: 2 }}>
