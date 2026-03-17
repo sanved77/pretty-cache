@@ -13,6 +13,8 @@ export interface AddTaskInputProps {
   mode?: 'add' | 'edit'
   inline?: boolean
   variant?: 'scratchpad' | 'projects'
+  /** When true, root and input expand to fill parent width (e.g. inside a 70% wrapper). */
+  fillContainer?: boolean
 }
 
 export default function AddTaskInput({
@@ -25,6 +27,7 @@ export default function AddTaskInput({
   mode: modeProp,
   inline = false,
   variant = 'scratchpad',
+  fillContainer = false,
 }: AddTaskInputProps) {
   const resolvedMode = modeProp ?? (initialValue != null && initialValue !== '' ? 'edit' : 'add')
   const [value, setValue] = useState(initialValue ?? '')
@@ -55,7 +58,7 @@ export default function AddTaskInput({
   const isProjects = variant === 'projects'
 
   const textFieldSx = {
-    flex: centerRow ? '0 1 auto' : 1,
+    flex: centerRow && !fillContainer ? '0 1 auto' : 1,
     minWidth: 0,
     ...(isProjects
       ? {
@@ -108,9 +111,10 @@ export default function AddTaskInput({
         gap: 1,
         pl: inline ? 0 : centerRow ? 0 : indentLevel * 3,
         mb: inline ? 0 : 0.5,
-        flex: inline ? 1 : undefined,
-        minWidth: inline ? 0 : undefined,
-        justifyContent: centerRow ? 'center' : 'flex-start',
+        flex: inline ? 1 : fillContainer ? 1 : undefined,
+        minWidth: inline ? 0 : fillContainer ? 0 : undefined,
+        width: fillContainer ? '100%' : undefined,
+        justifyContent: centerRow && !fillContainer ? 'center' : 'flex-start',
       }}
     >
       <TextField

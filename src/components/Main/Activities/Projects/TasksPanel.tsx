@@ -1,11 +1,24 @@
 import { useMemo, useState } from "react";
-import { Box, Chip, IconButton, Typography } from "@mui/material";
+import { DndProvider, useDrop } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+import {
+  Box,
+  Button,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  IconButton,
+  Typography,
+} from "@mui/material";
 import Add from "@mui/icons-material/Add";
 import type { Task } from "../../../../types/projects";
 import { isCompleted } from "../../../../utils/taskCompletion";
 import { TaskAddModeContext } from "./TaskAddModeContext";
 import AddTaskInput from "./AddTaskInput";
-import TaskItem from "./TaskItem";
+import TaskItem, { TASK_TYPE } from "./TaskItem";
 
 function getProjectTaskIds(tasks: Task[], projectId: string): Set<string> {
   const byProject = tasks.filter((t) => t.projectID === projectId);
@@ -72,6 +85,53 @@ export interface TasksPanelProps {
   }) => void;
   updateTask?: (taskId: string, content: string) => void;
   deleteTask?: (taskId: string) => void;
+  moveTask?: (draggedTaskId: string, newParentTaskId: string | null) => void;
+}
+
+type PendingMove = { draggedId: string; targetId: string | null } | null;
+
+function RootDropZone({
+  onDropToRoot,
+}: {
+  onDropToRoot: (draggedId: string) => void;
+}) {
+  const [{ isOver }, dropRef] = useDrop({
+    accept: TASK_TYPE,
+    drop: (item: { taskId: string }) => {
+      onDropToRoot(item.taskId);
+    },
+    collect: (monitor) => ({ isOver: monitor.isOver({ shallow: true }) }),
+  });
+  return (
+    <div
+      ref={dropRef as unknown as React.Ref<HTMLDivElement>}
+      style={{
+        padding: "8px 16px",
+        marginBottom: 4,
+        borderRadius: 4,
+        border: isOver
+          ? "1px dashed var(--projects-metric-color)"
+          : "1px dashed transparent",
+        textAlign: "center",
+        ...(isOver
+          ? {
+              backgroundColor: "rgba(15, 166, 242, 0.18)",
+            }
+          : {
+              backgroundColor: "transparent",
+            }),
+      }}
+    >
+      {isOver && (
+        <Typography
+          variant="caption"
+          sx={{ color: "var(--scratchpad-text-muted)" }}
+        >
+          Drop here for top level
+        </Typography>
+      )}
+    </div>
+  );
 }
 
 export default function TasksPanel({
@@ -81,11 +141,13 @@ export default function TasksPanel({
   addTask,
   updateTask,
   deleteTask,
+  moveTask,
 }: TasksPanelProps) {
   const [taskAddMode, setTaskAddMode] = useState<string | "root" | undefined>(
     undefined,
   );
   const [editTaskId, setEditTaskId] = useState<string | undefined>(undefined);
+  const [pendingMove, setPendingMove] = useState<PendingMove>(null);
   const taskMap = useMemo(() => new Map(tasks.map((t) => [t.id, t])), [tasks]);
   const rootTasks = useMemo(
     () => getRootTasks(tasks, projectId),
@@ -114,6 +176,29 @@ export default function TasksPanel({
   const handleDeleteTask = (taskId: string) => {
     deleteTask?.(taskId);
   };
+
+  const handleDrop = (draggedId: string, targetId: string | null) => {
+    if (targetId === null) {
+      setPendingMove({ draggedId, targetId: null });
+    } else if (draggedId !== targetId) {
+      setPendingMove({ draggedId, targetId });
+    }
+  };
+
+  const handleConfirmMove = () => {
+    if (pendingMove) {
+      moveTask?.(pendingMove.draggedId, pendingMove.targetId);
+      setPendingMove(null);
+    }
+  };
+
+  const draggedTask = pendingMove
+    ? taskMap.get(pendingMove.draggedId)
+    : undefined;
+  const targetTask =
+    pendingMove && pendingMove.targetId != null
+      ? taskMap.get(pendingMove.targetId)
+      : undefined;
 
   return (
     <TaskAddModeContext.Provider
@@ -184,24 +269,30 @@ export default function TasksPanel({
             setTaskAddMode(undefined);
           }}
         >
-          {sortedRoots.map((task) => (
-            <TaskItem
-              key={task.id}
-              task={task}
-              taskMap={taskMap}
-              onTaskComplete={onTaskComplete}
-              onAddTask={handleAddTask}
-              onEditTask={handleEditTask}
-              onDeleteTask={handleDeleteTask}
-              projectId={projectId}
-            />
-          ))}
+          <DndProvider backend={HTML5Backend}>
+            <RootDropZone onDropToRoot={(draggedId) => handleDrop(draggedId, null)} />
+            {sortedRoots.map((task) => (
+              <TaskItem
+                key={task.id}
+                task={task}
+                taskMap={taskMap}
+                onTaskComplete={onTaskComplete}
+                onAddTask={handleAddTask}
+                onEditTask={handleEditTask}
+                onDeleteTask={handleDeleteTask}
+                onDrop={handleDrop}
+                projectId={projectId}
+              />
+            ))}
           {taskAddMode === "root" ? (
-            <AddTaskInput
-              onSubmit={(content) => handleAddTask(content)}
-              onCancel={() => setTaskAddMode(undefined)}
-              centerRow
-            />
+            <Box sx={{ display: "flex", width: "70%" }}>
+              <AddTaskInput
+                onSubmit={(content) => handleAddTask(content)}
+                onCancel={() => setTaskAddMode(undefined)}
+                centerRow
+                fillContainer
+              />
+            </Box>
           ) : (
             <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>
               <IconButton
@@ -218,8 +309,38 @@ export default function TasksPanel({
               </IconButton>
             </Box>
           )}
+          </DndProvider>
         </Box>
       </Box>
+      <Dialog
+        open={pendingMove != null}
+        onClose={() => setPendingMove(null)}
+        aria-labelledby="move-task-dialog-title"
+        aria-describedby="move-task-dialog-description"
+      >
+        <DialogTitle id="move-task-dialog-title">
+          {pendingMove?.targetId == null
+            ? "Move task to top level?"
+            : "Move task as subtask?"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="move-task-dialog-description">
+            {pendingMove?.targetId == null
+              ? draggedTask
+                ? `Move "${draggedTask.content}" to top level? This will make it a top-level task.`
+                : "Move this task to top level?"
+              : draggedTask && targetTask
+                ? `Move "${draggedTask.content}" to become a subtask of "${targetTask.content}"?`
+                : "Move this task as a subtask of the target task?"}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPendingMove(null)}>Cancel</Button>
+          <Button onClick={handleConfirmMove} color="primary" autoFocus>
+            Move
+          </Button>
+        </DialogActions>
+      </Dialog>
     </TaskAddModeContext.Provider>
   );
 }

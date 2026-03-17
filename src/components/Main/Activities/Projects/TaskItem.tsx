@@ -1,4 +1,5 @@
 import { useContext, useState } from "react";
+import { useDrag, useDrop } from "react-dnd";
 import { motion } from "framer-motion";
 import {
   Box,
@@ -20,6 +21,8 @@ import type { Task } from "../../../../types/projects";
 import { isCompleted } from "../../../../utils/taskCompletion";
 import { TaskAddModeContext } from "./TaskAddModeContext";
 import AddTaskInput from "./AddTaskInput";
+
+export const TASK_TYPE = "TASK";
 
 function getTaskCompletionPercent(
   task: Task,
@@ -63,6 +66,7 @@ export interface TaskItemProps {
   onAddTask?: (content: string, parentTaskId: string) => void;
   onEditTask?: (taskId: string, content: string) => void;
   onDeleteTask?: (taskId: string) => void;
+  onDrop?: (draggedTaskId: string, targetTaskId: string) => void;
   projectId?: string;
 }
 
@@ -74,12 +78,33 @@ export default function TaskItem({
   onAddTask,
   onEditTask,
   onDeleteTask,
+  onDrop,
   projectId,
 }: TaskItemProps) {
   const addMode = useContext(TaskAddModeContext);
   const [isHovered, setIsHovered] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const isEditMode = addMode?.editTaskId === task.id;
+
+  const [{ isDragging }, dragRef] = useDrag({
+    type: TASK_TYPE,
+    item: () => ({ taskId: task.id }),
+    collect: (monitor) => ({ isDragging: monitor.isDragging() }),
+  });
+
+  const [{ isOver }, dropRef] = useDrop({
+    accept: TASK_TYPE,
+    drop: (item: { taskId: string }) => {
+      onDrop?.(item.taskId, task.id);
+    },
+    canDrop: (item: { taskId: string }) => item.taskId !== task.id,
+    collect: (monitor) => ({ isOver: monitor.isOver({ shallow: true }) }),
+  });
+
+  const attachDragDropRef = (el: HTMLDivElement | null) => {
+    dragRef(el);
+    dropRef(el);
+  };
   const subTaskIds = task.subTasks ?? [];
   const hasSubTasks = subTaskIds.length > 0;
   const completed = isCompleted(task, taskMap);
@@ -102,12 +127,24 @@ export default function TaskItem({
       sx={{ mb: 0.5 }}
     >
       <Box
+        ref={attachDragDropRef}
         sx={{
           display: "flex",
           alignItems: "flex-start",
           gap: 1,
           pl: indentLevel * 3,
           border: "1px solid transparent",
+          borderRadius: "4px",
+          cursor: isDragging ? "grabbing" : "grab",
+          ...(isDragging
+            ? { backgroundColor: "var(--scratchpad-toolbar-bg)", opacity: 0.85 }
+            : {}),
+          ...(isOver
+            ? {
+                backgroundColor: "rgba(15, 166, 242, 0.18)",
+                borderColor: "var(--projects-metric-color)",
+              }
+            : {}),
         }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -270,6 +307,7 @@ export default function TaskItem({
           onAddTask={onAddTask}
           onEditTask={onEditTask}
           onDeleteTask={onDeleteTask}
+          onDrop={onDrop}
           projectId={projectId}
         />
       ))}

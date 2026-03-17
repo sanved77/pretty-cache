@@ -123,6 +123,7 @@ export function useTasks(): {
   addTask: (params: { content: string; parentTaskId?: string; projectId: string }) => void
   updateTask: (taskId: string, content: string) => void
   deleteTask: (taskId: string) => void
+  moveTask: (draggedTaskId: string, newParentTaskId: string | null) => void
 } {
   const [tasks, setTasks] = useState<Task[]>(() => getTasksFromStorage() ?? getFakeTasks())
 
@@ -190,5 +191,35 @@ export function useTasks(): {
     })
   }, [])
 
-  return { tasks, setTaskComplete, addTask, updateTask, deleteTask }
+  const moveTask = useCallback(
+    (draggedTaskId: string, newParentTaskId: string | null) => {
+      if (newParentTaskId !== null && draggedTaskId === newParentTaskId) return
+      setTasks((prev) => {
+        if (newParentTaskId === null) {
+          return prev.map((t) => {
+            const subTasks = t.subTasks ?? []
+            if (!subTasks.includes(draggedTaskId)) return t
+            return { ...t, subTasks: subTasks.filter((id) => id !== draggedTaskId) }
+          })
+        }
+        const descendants = collectTaskAndDescendantIds(draggedTaskId, prev)
+        if (descendants.has(newParentTaskId)) return prev
+        return prev.map((t) => {
+          const subTasks = t.subTasks ?? []
+          const hasDragged = subTasks.includes(draggedTaskId)
+          const isNewParent = t.id === newParentTaskId
+          if (hasDragged && !isNewParent) {
+            return { ...t, subTasks: subTasks.filter((id) => id !== draggedTaskId) }
+          }
+          if (isNewParent && !subTasks.includes(draggedTaskId)) {
+            return { ...t, subTasks: [...subTasks, draggedTaskId] }
+          }
+          return t
+        })
+      })
+    },
+    []
+  )
+
+  return { tasks, setTaskComplete, addTask, updateTask, deleteTask, moveTask }
 }
