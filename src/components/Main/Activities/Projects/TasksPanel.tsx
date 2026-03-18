@@ -77,7 +77,7 @@ function sortTasksIncompleteFirst(
 export interface TasksPanelProps {
   tasks: Task[];
   projectId: string;
-  onTaskComplete?: (taskId: string, isComplete: boolean) => void;
+  onTaskComplete?: (taskId: string, isComplete: boolean, completeSubtasks?: boolean) => void;
   addTask?: (params: {
     content: string;
     parentTaskId?: string;

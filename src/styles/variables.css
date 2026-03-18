@@ -24,4 +24,8 @@
   --projects-metric-color: #0FA6F2;
   --projects-inactive: #1E293B;
   --projects-inactive-text: #94A3B8;
+
+  /* Task checkboxes */
+  --tasks-complete-color: #4caf50;
+  --tasks-archived-color: #c9ac28;
 }

@@ -123,7 +123,7 @@ function collectTaskAndDescendantIds(taskId: string, tasks: Task[]): Set<string>
 
 export function useTasks(): {
   tasks: Task[]
-  setTaskComplete: (taskId: string, isComplete: boolean) => void
+  setTaskComplete: (taskId: string, isComplete: boolean, completeSubtasks?: boolean) => void
   addTask: (params: { content: string; parentTaskId?: string; projectId: string }) => void
   updateTask: (taskId: string, content: string) => void
   deleteTask: (taskId: string) => void
@@ -143,15 +143,20 @@ export function useTasks(): {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
   }, [tasks])
 
-  const setTaskComplete = useCallback((taskId: string, isComplete: boolean) => {
-    setTasks((prev) =>
-      prev.map((t) => {
-        if (t.id !== taskId) return t
+  const setTaskComplete = useCallback((taskId: string, isComplete: boolean, completeSubtasks: boolean = false) => {
+    setTasks((prev) => {
+      const taskIds = [taskId];
+      if (completeSubtasks) {
+        taskIds.push(...collectTaskAndDescendantIds(taskId, prev))
+      }
+      return prev.map((t) => {
+        if (!taskIds.includes(t.id) || (t.isArchived ?? false)) return t
         return {
           ...t,
           completedOn: isComplete ? Date.now() : undefined,
         }
       })
+    }
     )
   }, [])
 

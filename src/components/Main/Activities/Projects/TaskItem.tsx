@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
+import IndeterminateCheckBoxIcon from "@mui/icons-material/IndeterminateCheckBox";
 import Add from "@mui/icons-material/Add";
 import Archive from "@mui/icons-material/Archive";
 import Unarchive from "@mui/icons-material/Unarchive";
@@ -70,7 +71,7 @@ export interface TaskItemProps {
   task: Task;
   taskMap: Map<string, Task>;
   indentLevel?: number;
-  onTaskComplete?: (taskId: string, isComplete: boolean) => void;
+  onTaskComplete?: (taskId: string, isComplete: boolean, completeSubtasks?: boolean) => void;
   onAddTask?: (content: string, parentTaskId: string) => void;
   onEditTask?: (taskId: string, content: string) => void;
   onDeleteTask?: (taskId: string) => void;
@@ -132,6 +133,7 @@ export default function TaskItem({
     ? `${Math.round((completedCount / total) * 100)}% complete`
     : null;
   const sortedChildren = sortChildTasks(subTaskIds, taskMap);
+  const archived = task.isArchived ?? false;
   const showAddIcon = isHovered && addMode?.setTaskAddMode && !isEditMode;
   const showDeleteButton = isHovered && !isEditMode && onDeleteTask;
   const showArchiveButton = isHovered && !isEditMode && onArchiveTask;
@@ -169,19 +171,32 @@ export default function TaskItem({
       >
         <Checkbox
           size="small"
-          checked={completed}
-          disabled={hasSubTasks}
+          checked={archived ? false : completed}
+          disabled={archived}
           icon={
-            <CheckBoxOutlineBlankIcon
-              sx={{ color: "var(--scratchpad-text-muted)" }}
-            />
+            archived ? (
+              <IndeterminateCheckBoxIcon
+                sx={{ color: "var(--tasks-archived-color)" }}
+              />
+            ) : (
+              <CheckBoxOutlineBlankIcon
+                sx={{ color: "var(--scratchpad-text-muted)" }}
+              />
+            )
           }
           onChange={
-            hasSubTasks
+            archived
               ? undefined
-              : () => onTaskComplete?.(task.id, !completed)
+              : () =>
+                  onTaskComplete?.(
+                    task.id,
+                    !completed,
+                    !!hasSubTasks,
+                  )
           }
-          checkedIcon={<CheckBoxIcon sx={{ color: "#4caf50" }} />}
+          checkedIcon={
+            <CheckBoxIcon sx={{ color: "var(--tasks-complete-color)" }} />
+          }
           sx={{ p: 0.25, alignSelf: "center" }}
         />
         <Box
