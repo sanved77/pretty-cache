@@ -129,8 +129,12 @@ export default function TaskItem({
     task,
     taskMap,
   );
+  const percent =
+    total > 0 ? (completedCount / total) * 100 : null;
   const percentText = hasSubTasks
-    ? `${Math.round((completedCount / total) * 100)}% complete`
+    ? percent
+      ? `${Math.round(percent)}% complete`
+      : null
     : null;
   const sortedChildren = sortChildTasks(subTaskIds, taskMap);
   const archived = task.isArchived ?? false;

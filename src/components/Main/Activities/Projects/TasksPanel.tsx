@@ -21,7 +21,7 @@ import AddTaskInput from "./AddTaskInput";
 import TaskItem, { TASK_TYPE } from "./TaskItem";
 
 function getProjectTaskIds(tasks: Task[], projectId: string): Set<string> {
-  const byProject = tasks.filter((t) => t.projectID === projectId && !t.isArchived);
+  const byProject = tasks.filter((t) => t.projectID === projectId);
   const ids = new Set<string>();
   function add(task: Task) {
     ids.add(task.id);
