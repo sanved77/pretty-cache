@@ -46,7 +46,7 @@ function getProjectCompletion(
   let total = ids.size;
   for (const id of ids) {
     const t = taskMap.get(id);
-    if (t && isCompleted(t, taskMap)) completed++;
+    if (t && isCompleted(t, taskMap) === 'completed') completed++;
   }
   return { completed, total };
 }

@@ -32,8 +32,13 @@ function getTaskCompletionPercent(
   taskMap: Map<string, Task>,
 ): { completed: number; total: number } {
   const hasSubTasks = task.subTasks != null && task.subTasks.length > 0;
-  let completed = hasSubTasks ? 0 : isCompleted(task, taskMap) ? 1 : 0;
-  let total = hasSubTasks ? 0 : 1;
+  const isArchived = task.isArchived ?? false;
+  let completed = hasSubTasks
+    ? 0
+    : isCompleted(task, taskMap) === "completed"
+      ? 1
+      : 0;
+  let total = hasSubTasks ? 0 : isArchived ? 0 : 1;
   for (const id of task.subTasks ?? []) {
     const child = taskMap.get(id);
     if (child) {
@@ -117,7 +122,8 @@ export default function TaskItem({
     ? subTaskIdsRaw
     : subTaskIdsRaw.filter((id) => !taskMap.get(id)?.isArchived);
   const hasSubTasks = subTaskIds.length > 0;
-  const completed = isCompleted(task, taskMap);
+  const completedStatus = isCompleted(task, taskMap);
+  const completed = completedStatus === "completed";
   const { completed: completedCount, total } = getTaskCompletionPercent(
     task,
     taskMap,
@@ -258,34 +264,36 @@ export default function TaskItem({
               <Add sx={{ fontSize: 18 }} />
             </IconButton>
           )}
-        {showArchiveButton && (
-          <IconButton
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation();
-              onArchiveTask?.(task.id, !(task.isArchived ?? false));
-              if (addMode?.editTaskId === task.id) addMode.setEditTaskId(undefined);
-              if (addMode?.taskAddMode === task.id) addMode.setTaskAddMode(undefined);
-            }}
-            sx={{
-              color: "#ffffff",
-              p: 0.25,
-              mt: 0.25,
-              bgcolor: "var(--projects-metric-color)",
-              "&:hover": {
+          {showArchiveButton && (
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                onArchiveTask?.(task.id, !(task.isArchived ?? false));
+                if (addMode?.editTaskId === task.id)
+                  addMode.setEditTaskId(undefined);
+                if (addMode?.taskAddMode === task.id)
+                  addMode.setTaskAddMode(undefined);
+              }}
+              sx={{
+                color: "#ffffff",
+                p: 0.25,
+                mt: 0.25,
                 bgcolor: "var(--projects-metric-color)",
-              },
-              borderRadius: "4px",
-            }}
-            aria-label={task.isArchived ? "Unarchive task" : "Archive task"}
-          >
-            {task.isArchived ? (
-              <Unarchive sx={{ fontSize: 18 }} />
-            ) : (
-              <Archive sx={{ fontSize: 18 }} />
-            )}
-          </IconButton>
-        )}
+                "&:hover": {
+                  bgcolor: "var(--projects-metric-color)",
+                },
+                borderRadius: "4px",
+              }}
+              aria-label={task.isArchived ? "Unarchive task" : "Archive task"}
+            >
+              {task.isArchived ? (
+                <Unarchive sx={{ fontSize: 18 }} />
+              ) : (
+                <Archive sx={{ fontSize: 18 }} />
+              )}
+            </IconButton>
+          )}
           {showDeleteButton && (
             <IconButton
               size="small"

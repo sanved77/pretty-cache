@@ -5,11 +5,19 @@ import type { Task } from '../types/projects'
  * - If the task has subtasks: returns true only when all subtasks are completed (AND).
  * - If the task has no subtasks: returns true when completedOn is set.
  */
-export function isCompleted(task: Task | undefined, taskMap: Map<string, Task>): boolean {
-  if (task == null) return false
+export function isCompleted(task: Task | undefined, taskMap: Map<string, Task>): string {
+  if (task == null) return 'incomplete';
   const subTasks = task.subTasks
   if (subTasks == null || subTasks.length === 0) {
-    return task.completedOn != null
+    if(task.isArchived ?? false){
+      return 'archived';
+    }else if(task.completedOn != null) {
+      return 'completed';
+    }
+    return 'incomplete';
   }
-  return subTasks.every((id) => isCompleted(taskMap.get(id), taskMap))
+  if(subTasks.every((id) => isCompleted(taskMap.get(id), taskMap) !== 'incomplete')){
+    return 'completed';
+  }
+  return 'incomplete';
 }
