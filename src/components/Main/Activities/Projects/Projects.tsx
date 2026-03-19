@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import { Box, IconButton, TextField, Typography } from "@mui/material";
 import Edit from "@mui/icons-material/Edit";
 import Check from "@mui/icons-material/Check";
@@ -34,7 +35,8 @@ export default function Projects() {
     updateProjectDescription,
   } = useProjects();
   const { showSnackbar } = useSnackbarContext();
-  const selectedProjectId = projects[0]?.id ?? "";
+  const { projectId } = useParams<{ projectId: string }>();
+  const selectedProjectId = projectId ?? "";
   const selectedProject = useMemo(
     () => projects.find((p) => p.id === selectedProjectId),
     [projects, selectedProjectId],
@@ -46,6 +48,27 @@ export default function Projects() {
   const [errorText, setErrorText] = useState<string | null>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const descRef = useRef<HTMLInputElement>(null);
+
+  const taskActionsValue = useMemo(
+    () => ({
+      setTaskComplete,
+      addTask,
+      updateTask,
+      deleteTask,
+      moveTask,
+      archiveTask,
+      duplicateTask,
+    }),
+    [
+      setTaskComplete,
+      addTask,
+      updateTask,
+      deleteTask,
+      moveTask,
+      archiveTask,
+      duplicateTask,
+    ],
+  );
 
   const cancelEdit = () => {
     setEditingField(null);
@@ -69,6 +92,33 @@ export default function Projects() {
     updateProjectDescription(selectedProjectId, value);
     cancelEdit();
   };
+
+  if (selectedProjectId && !selectedProject) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100%",
+          backgroundColor: "var(--projects-bg)",
+          color: "var(--scratchpad-text)",
+          p: 2,
+        }}
+      >
+        <Typography variant="h6" sx={{ mb: 2 }}>
+          Project not found
+        </Typography>
+        <Link
+          to="/projects"
+          style={{ color: "var(--projects-metric-color)" }}
+        >
+          Back to Projects
+        </Link>
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -278,28 +328,7 @@ export default function Projects() {
             flexDirection: "column",
           }}
         >
-          <TaskActionsProvider
-            value={useMemo(
-              () => ({
-                setTaskComplete,
-                addTask,
-                updateTask,
-                deleteTask,
-                moveTask,
-                archiveTask,
-                duplicateTask,
-              }),
-              [
-                setTaskComplete,
-                addTask,
-                updateTask,
-                deleteTask,
-                moveTask,
-                archiveTask,
-                duplicateTask,
-              ],
-            )}
-          >
+          <TaskActionsProvider value={taskActionsValue}>
             <TasksPanel tasks={tasks} projectId={selectedProjectId} />
           </TaskActionsProvider>
         </Box>
