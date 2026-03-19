@@ -86,7 +86,7 @@ export default function LinksSection({ links, onAddLink }: LinksSectionProps) {
           }}
         />
       </Box>
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+      <Box sx={{ display: "flex", flexDirection: "row", flexWrap: "wrap", gap: 1, width: "fit-content" }}>
         {sorted.length > 0 &&
         sorted.map((link, i) => {
           const Icon = getIconForType(link.type);
@@ -102,13 +102,13 @@ export default function LinksSection({ links, onAddLink }: LinksSectionProps) {
                 px: 1.5,
                 py: 0.75,
                 borderRadius: 1,
-                bgcolor: "var(--scratchpad-toolbar-bg)",
+                bgcolor: "var(--tasks-panel-bg)",
                 color: "var(--scratchpad-text)",
-                "&:hover": { bgcolor: "var(--scratchpad-separator)" },
+                "&:hover": { bgcolor: "var(--tasks-panel-bg)" },
               }}
             >
               <Icon
-                sx={{ fontSize: 18, color: "var(--scratchpad-text-muted)" }}
+                sx={{ fontSize: 18, color: "var(--tasks-text)" }}
               />
               <Typography variant="body2">{link.label}</Typography>
             </Link>

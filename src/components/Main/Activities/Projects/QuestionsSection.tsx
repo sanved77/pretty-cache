@@ -89,8 +89,7 @@ export default function QuestionsSection({
                 gap: 1,
                 p: 1.5,
                 borderLeft: "4px solid #FB923C",
-                bgcolor: "var(--scratchpad-toolbar-bg)",
-                // border: "1px solid var(--scratchpad-separator)",
+                bgcolor: "var(--tasks-panel-bg)",
               }}
             >
               <Typography
