@@ -1,7 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
-import type { Project } from '../types/projects'
+import type { LinkObj, Project } from '../types/projects'
 
 const STORAGE_KEY = 'projects'
+
+function ensureLinkIds(links: LinkObj[]): LinkObj[] {
+  return links.map((l) => (l.id ? l : { ...l, id: crypto.randomUUID() }))
+}
 
 function isValidBlockerEntry(item: unknown): item is { text: string; dismissed?: boolean } {
   if (item == null || typeof item !== 'object') return false
@@ -36,45 +40,14 @@ function getProjectsFromStorage(): Project[] | null {
     for (const item of parsed) {
       if (!isValidProject(item)) return null
     }
-    return parsed as Project[]
+    const projects = parsed as Project[]
+    return projects.map((p) => ({
+      ...p,
+      links: ensureLinkIds(p.links ?? []),
+    }))
   } catch {
     return null
   }
-}
-
-function getFakeProjects(): Project[] {
-  const now = Date.now()
-  const day = 24 * 60 * 60 * 1000
-  const projectId = 'proj-1'
-
-  return [
-    {
-      id: projectId,
-      projectName: 'Auth Module',
-      description: 'Auth module redesign and performance work',
-      blockers: [
-        { text: 'External API timeout is preventing end-to-end testing of the new auth flow.' },
-        { text: 'Legal approval pending for updated privacy policy before launch.' },
-      ],
-      questions: [
-        'Should we support legacy browser polyfills for the new dashboard?',
-        'What is the expected peak load for the Black Friday event?',
-      ],
-      links: [
-        { label: 'Confluence Docs', url: '#', type: 'Docs' },
-        { label: 'Log Explorer', url: '#', type: 'Docs' },
-        { label: 'Pull Requests', url: '#', type: 'Code' },
-        { label: 'Telemetry Dash', url: '#', type: 'Telemetry' },
-        { label: 'UML Diagrams', url: '#', type: 'Design' },
-        { label: 'User Research', url: '#', type: 'Design' },
-        { label: 'AWS Console', url: '#', type: 'Tool' },
-        { label: 'Temporal UI', url: '#', type: 'Tool' },
-      ],
-      createdOn: now - 30 * day,
-      deadlineOn: now + 14 * day,
-      completedOn: undefined,
-    },
-  ]
 }
 
 export function useProjects(): {
@@ -83,17 +56,12 @@ export function useProjects(): {
   addBlocker: (projectId: string, text: string) => void
   addQuestion: (projectId: string, text: string) => void
   addLink: (projectId: string, link: { label: string; url: string; type?: string }) => void
+  updateLink: (projectId: string, linkId: string, update: { label: string; url: string; type: string }) => void
+  deleteLink: (projectId: string, linkId: string) => void
   updateProjectName: (projectId: string, projectName: string) => void
   updateProjectDescription: (projectId: string, description: string) => void
 } {
-  const [projects, setProjects] = useState<Project[]>(() => getProjectsFromStorage() ?? getFakeProjects())
-
-  useEffect(() => {
-    const stored = getProjectsFromStorage()
-    if (stored === null || stored.length === 0) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(getFakeProjects()))
-    }
-  }, [])
+  const [projects, setProjects] = useState<Project[]>(() => getProjectsFromStorage() ?? [])
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(projects))
@@ -134,7 +102,33 @@ export function useProjects(): {
     setProjects((prev) =>
       prev.map((p) => {
         if (p.id !== projectId) return p
-        const links = [...(p.links ?? []), link]
+        const newLink = { ...link, id: crypto.randomUUID() }
+        const links = [...(p.links ?? []), newLink]
+        return { ...p, links }
+      })
+    )
+  }, [])
+
+  const updateLink = useCallback(
+    (projectId: string, linkId: string, update: { label: string; url: string; type: string }) => {
+      setProjects((prev) =>
+        prev.map((p) => {
+          if (p.id !== projectId) return p
+          const links = (p.links ?? []).map((l) =>
+            l.id === linkId ? { ...l, ...update } : l
+          )
+          return { ...p, links }
+        })
+      )
+    },
+    []
+  )
+
+  const deleteLink = useCallback((projectId: string, linkId: string) => {
+    setProjects((prev) =>
+      prev.map((p) => {
+        if (p.id !== projectId) return p
+        const links = (p.links ?? []).filter((l) => l.id !== linkId)
         return { ...p, links }
       })
     )
@@ -148,5 +142,15 @@ export function useProjects(): {
     setProjects((prev) => prev.map((p) => (p.id === projectId ? { ...p, description } : p)))
   }, [])
 
-  return { projects, setBlockerDismissed, addBlocker, addQuestion, addLink, updateProjectName, updateProjectDescription }
+  return {
+    projects,
+    setBlockerDismissed,
+    addBlocker,
+    addQuestion,
+    addLink,
+    updateLink,
+    deleteLink,
+    updateProjectName,
+    updateProjectDescription,
+  }
 }

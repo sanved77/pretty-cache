@@ -1,4 +1,5 @@
 export interface LinkObj {
+  id: string
   label: string
   url: string
   type?: string

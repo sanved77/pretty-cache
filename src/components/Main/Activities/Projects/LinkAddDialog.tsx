@@ -49,17 +49,30 @@ function LinkTypeIcon({ type, sx }: { type: string; sx?: object }) {
 export interface LinkAddDialogProps {
   open: boolean;
   onClose: () => void;
-  onAdd: (link: { label: string; url: string; type: string }) => void;
+  /** Create mode */
+  onAdd?: (link: { label: string; url: string; type: string }) => void;
+  /** Edit mode (provide together with onSave) */
+  linkId?: string;
+  initialLabel?: string;
+  initialUrl?: string;
+  initialType?: string;
+  onSave?: (linkId: string, update: { label: string; url: string; type: string }) => void;
 }
 
 export default function LinkAddDialog({
   open,
   onClose,
   onAdd,
+  linkId,
+  initialLabel,
+  initialUrl,
+  initialType,
+  onSave,
 }: LinkAddDialogProps) {
-  const [label, setLabel] = useState("");
-  const [url, setUrl] = useState("");
-  const [selectedType, setSelectedType] = useState<string>("Docs");
+  const isEditMode = Boolean(linkId && onSave);
+  const [label, setLabel] = useState(initialLabel ?? "");
+  const [url, setUrl] = useState(initialUrl ?? "");
+  const [selectedType, setSelectedType] = useState<string>(initialType ?? "Docs");
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const menuOpen = Boolean(anchorEl);
 
@@ -71,13 +84,18 @@ export default function LinkAddDialog({
     onClose();
   }, [onClose]);
 
-  const handleAdd = useCallback(() => {
+  const handleSubmit = useCallback(() => {
     const trimmedLabel = label.trim();
     const trimmedUrl = url.trim();
     if (trimmedLabel.length === 0 || trimmedUrl.length === 0) return;
-    onAdd({ label: trimmedLabel, url: trimmedUrl, type: selectedType });
+    const payload = { label: trimmedLabel, url: trimmedUrl, type: selectedType };
+    if (isEditMode && linkId && onSave) {
+      onSave(linkId, payload);
+    } else if (onAdd) {
+      onAdd(payload);
+    }
     resetAndClose();
-  }, [label, url, selectedType, onAdd, resetAndClose]);
+  }, [label, url, selectedType, isEditMode, linkId, onSave, onAdd, resetAndClose]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -91,10 +109,10 @@ export default function LinkAddDialog({
       if (e.key === "Enter" && !menuOpen) {
         e.preventDefault();
         e.stopPropagation();
-        handleAdd();
+        handleSubmit();
       }
     },
-    [handleAdd, resetAndClose, menuOpen],
+    [handleSubmit, resetAndClose, menuOpen],
   );
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -119,7 +137,9 @@ export default function LinkAddDialog({
       onKeyDown={handleKeyDown}
       aria-labelledby="link-add-dialog-title"
     >
-      <DialogTitle id="link-add-dialog-title">Add new Link</DialogTitle>
+      <DialogTitle id="link-add-dialog-title">
+        {isEditMode ? "Edit Link" : "Add new Link"}
+      </DialogTitle>
       <DialogContent>
         <TextField
           autoFocus
@@ -181,8 +201,8 @@ export default function LinkAddDialog({
       </DialogContent>
       <DialogActions>
         <Button onClick={resetAndClose}>Cancel</Button>
-        <Button onClick={handleAdd} variant="contained" disabled={!canAdd}>
-          Add
+        <Button onClick={handleSubmit} variant="contained" disabled={!canAdd}>
+          {isEditMode ? "Save" : "Add"}
         </Button>
       </DialogActions>
     </Dialog>

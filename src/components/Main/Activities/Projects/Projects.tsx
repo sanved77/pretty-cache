@@ -28,6 +28,8 @@ export default function Projects() {
     addBlocker,
     addQuestion,
     addLink,
+    updateLink,
+    deleteLink,
     updateProjectName,
     updateProjectDescription,
   } = useProjects();
@@ -310,6 +312,14 @@ export default function Projects() {
               onAddLink={(link) => {
                 addLink(selectedProjectId, link);
                 showSnackbar("success", "Link added");
+              }}
+              onEditLink={(id, update) => {
+                updateLink(selectedProjectId, id, update);
+                showSnackbar("success", "Link updated");
+              }}
+              onDeleteLink={(id) => {
+                deleteLink(selectedProjectId, id);
+                showSnackbar("success", "Link deleted");
               }}
             />
             <BlockersSection
