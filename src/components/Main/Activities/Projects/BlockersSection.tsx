@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Box, IconButton, Typography } from '@mui/material'
 import Add from '@mui/icons-material/Add'
 import ClearAll from '@mui/icons-material/ClearAll'
+import Visibility from '@mui/icons-material/Visibility'
+import VisibilityOff from '@mui/icons-material/VisibilityOff'
 import type { BlockerEntry } from '../../../../types/projects'
 import ContentAddDialog from './ContentAddDialog'
 
@@ -14,6 +16,7 @@ export interface BlockersSectionProps {
 export default function BlockersSection({ blockers, onDismissBlocker, onAddBlocker }: BlockersSectionProps) {
   const [hoveredOn, setHoveredOn] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [showDismissed, setShowDismissed] = useState(false)
   const visible = blockers.filter((b) => !b.dismissed)
 
   return (
@@ -54,12 +57,31 @@ export default function BlockersSection({ blockers, onDismissBlocker, onAddBlock
             <Add sx={{ fontSize: 18 }} />
           </IconButton>
         )}
+        {hoveredOn && (
+          <IconButton
+            size="small"
+            onClick={() => setShowDismissed((prev) => !prev)}
+            sx={{
+              p: 0.5,
+              width: 24,
+              height: 24,
+              flexShrink: 0,
+              borderRadius: '50%',
+              color: '#ffffff',
+              bgcolor: '#F43F5E',
+              '&:hover': { bgcolor: '#F43F5E', opacity: 0.9 },
+            }}
+            aria-label={showDismissed ? 'Hide dismissed blockers' : 'Show dismissed blockers'}
+          >
+            {showDismissed ? <Visibility sx={{ fontSize: 18 }} /> : <VisibilityOff sx={{ fontSize: 18 }} />}
+          </IconButton>
+        )}
         <Box sx={{ flex: 1, opacity: 0.5, height: '0.5px', backgroundColor: '#F43F5E', minWidth: 8 }} />
       </Box>
-      {visible.length > 0 && (
+      {(showDismissed ? blockers : visible).length > 0 && (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           {blockers.map((entry, i) => {
-            if (entry.dismissed) return null
+            if (entry.dismissed && !showDismissed) return null
             return (
               <Box
                 key={i}
