@@ -39,14 +39,14 @@ export default function LinksSection({ links }: LinksSectionProps) {
           Context Links
         </Typography>
       </Box>
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
         {sorted.map((link, i) => {
           const Icon = getIconForType(link.type)
           return (
             <Link
               key={i}
               href={link.url}
-              underline="none"
+              target="_blank"
               sx={{
                 display: 'flex',
                 alignItems: 'center',
@@ -56,7 +56,6 @@ export default function LinksSection({ links }: LinksSectionProps) {
                 borderRadius: 1,
                 bgcolor: 'var(--scratchpad-toolbar-bg)',
                 color: 'var(--scratchpad-text)',
-                border: '1px solid var(--scratchpad-separator)',
                 '&:hover': { bgcolor: 'var(--scratchpad-separator)' },
               }}
             >

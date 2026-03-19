@@ -304,6 +304,7 @@ export default function Projects() {
       <Box sx={{ flex: "0 0 40%", minWidth: 0, overflow: "auto", p: 2 }}>
         {selectedProject ? (
           <>
+            <LinksSection links={selectedProject.links} />
             <BlockersSection
               blockers={selectedProject.blockers}
               onDismissBlocker={(i) =>
@@ -321,7 +322,6 @@ export default function Projects() {
                 showSnackbar("success", "Question added");
               }}
             />
-            <LinksSection links={selectedProject.links} />
           </>
         ) : null}
       </Box>
