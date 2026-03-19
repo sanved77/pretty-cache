@@ -17,6 +17,7 @@ import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import IndeterminateCheckBoxIcon from "@mui/icons-material/IndeterminateCheckBox";
 import type { Task } from "../../../../types/projects";
 import { isCompleted } from "../../../../utils/taskCompletion";
+import { useSnackbarContext } from "../../../../contexts/useSnackbarContext";
 import { useTaskActions } from "./useTaskActions";
 import { TaskAddModeContext } from "./TaskAddModeContext";
 import AddTaskInput from "./AddTaskInput";
@@ -90,6 +91,7 @@ export default function TaskItem({
     archiveTask,
     duplicateTask,
   } = useTaskActions();
+  const { showSnackbar } = useSnackbarContext();
   const [isHovered, setIsHovered] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState<{
@@ -234,6 +236,7 @@ export default function TaskItem({
               onSubmit={(content) => {
                 updateTask(task.id, content);
                 addMode?.setEditTaskId(undefined);
+                showSnackbar("info", "Task updated");
               }}
               onCancel={() => addMode?.setEditTaskId(undefined)}
             />
@@ -297,7 +300,10 @@ export default function TaskItem({
             addMode.setTaskAddMode(undefined);
         }}
         onDelete={() => setDeleteDialogOpen(true)}
-        onDuplicate={(taskId) => duplicateTask(taskId)}
+        onDuplicate={(taskId) => {
+          duplicateTask(taskId);
+          showSnackbar("success", "Task duplicated");
+        }}
       />
       <Dialog
         open={deleteDialogOpen}
@@ -311,6 +317,7 @@ export default function TaskItem({
             e.stopPropagation();
             deleteTask(task.id);
             setDeleteDialogOpen(false);
+            showSnackbar("info", "Task deleted");
           }
         }}
         aria-labelledby="delete-task-dialog-title"
@@ -329,6 +336,7 @@ export default function TaskItem({
             onClick={() => {
               deleteTask(task.id);
               setDeleteDialogOpen(false);
+              showSnackbar("info", "Task deleted");
             }}
             color="error"
             autoFocus
@@ -354,6 +362,7 @@ export default function TaskItem({
           onSubmit={(content) => {
             addTask({ content, parentTaskId: task.id, projectId });
             addMode.setTaskAddMode(undefined);
+            showSnackbar("success", "Subtask added");
           }}
           onCancel={() => addMode.setTaskAddMode(undefined)}
         />

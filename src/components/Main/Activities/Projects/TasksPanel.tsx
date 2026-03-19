@@ -16,6 +16,7 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import type { Task } from "../../../../types/projects";
 import { isCompleted } from "../../../../utils/taskCompletion";
+import { useSnackbarContext } from "../../../../contexts/useSnackbarContext";
 import { useTaskActions } from "./useTaskActions";
 import { TaskAddModeContext } from "./TaskAddModeContext";
 import AddTaskInput from "./AddTaskInput";
@@ -137,6 +138,7 @@ export default function TasksPanel({
   projectId,
 }: TasksPanelProps) {
   const { addTask, moveTask } = useTaskActions();
+  const { showSnackbar } = useSnackbarContext();
   const [taskAddMode, setTaskAddMode] = useState<string | "root" | undefined>(
     undefined,
   );
@@ -163,6 +165,7 @@ export default function TasksPanel({
 
   const handleAddRootTask = (content: string) => {
     addTask({ content, projectId });
+    showSnackbar("success", "Task added");
   };
 
   const handleDrop = (draggedId: string, targetId: string | null) => {
