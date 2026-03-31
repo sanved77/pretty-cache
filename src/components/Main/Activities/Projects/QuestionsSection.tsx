@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, IconButton, Typography } from "@mui/material";
+import { Box, IconButton, Tooltip, Typography } from "@mui/material";
 import Add from "@mui/icons-material/Add";
 import CheckCircleOutline from "@mui/icons-material/CheckCircleOutline";
 import ContentAddDialog from "./ContentAddDialog";
@@ -47,26 +47,28 @@ export default function QuestionsSection({
         </Typography>
 
         {onAddQuestion && hoveredOn && (
-          <IconButton
-            size="small"
-            onClick={() => setDialogOpen(true)}
-            sx={{
-              p: 0.5,
-              width: 24,
-              height: 24,
-              flexShrink: 0,
-              borderRadius: "50%",
-              color: "var(--color-on-accent)",
-              bgcolor: "var(--projects-questions-color)",
-              "&:hover": {
+          <Tooltip title="Add question" placement="top">
+            <IconButton
+              size="small"
+              onClick={() => setDialogOpen(true)}
+              sx={{
+                p: 0.5,
+                width: 24,
+                height: 24,
+                flexShrink: 0,
+                borderRadius: "50%",
+                color: "var(--color-on-accent)",
                 bgcolor: "var(--projects-questions-color)",
-                opacity: 0.9,
-              },
-            }}
-            aria-label="Add question"
-          >
-            <Add sx={{ fontSize: 18 }} />
-          </IconButton>
+                "&:hover": {
+                  bgcolor: "var(--projects-questions-color)",
+                  opacity: 0.9,
+                },
+              }}
+              aria-label="Add question"
+            >
+              <Add sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
         )}
         <Box
           sx={{
@@ -103,23 +105,30 @@ export default function QuestionsSection({
               >
                 {text}
               </Typography>
-              <IconButton
-                size="small"
-                onClick={() => toggleResolved(i)}
-                sx={{ p: 0.25 }}
-                aria-label={
+              <Tooltip
+                title={
                   resolved.has(i) ? "Mark unresolved" : "Mark resolved"
                 }
+                placement="top"
               >
-                <CheckCircleOutline
-                  sx={{
-                    fontSize: 18,
-                    color: resolved.has(i)
-                      ? "var(--tasks-complete-color)"
-                      : "var(--scratchpad-text-muted)",
-                  }}
-                />
-              </IconButton>
+                <IconButton
+                  size="small"
+                  onClick={() => toggleResolved(i)}
+                  sx={{ p: 0.25 }}
+                  aria-label={
+                    resolved.has(i) ? "Mark unresolved" : "Mark resolved"
+                  }
+                >
+                  <CheckCircleOutline
+                    sx={{
+                      fontSize: 18,
+                      color: resolved.has(i)
+                        ? "var(--tasks-complete-color)"
+                        : "var(--scratchpad-text-muted)",
+                    }}
+                  />
+                </IconButton>
+              </Tooltip>
             </Box>
           ))}
         </Box>

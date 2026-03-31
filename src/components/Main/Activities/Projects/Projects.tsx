@@ -22,6 +22,8 @@ export default function Projects() {
     moveTask,
     archiveTask,
     duplicateTask,
+    isTaskTracked,
+    toggleTrackedTask,
   } = useTasks();
   const {
     projects,
@@ -58,6 +60,8 @@ export default function Projects() {
       moveTask,
       archiveTask,
       duplicateTask,
+      isTaskTracked,
+      toggleTrackedTask,
     }),
     [
       setTaskComplete,
@@ -67,6 +71,8 @@ export default function Projects() {
       moveTask,
       archiveTask,
       duplicateTask,
+      isTaskTracked,
+      toggleTrackedTask,
     ],
   );
 

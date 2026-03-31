@@ -1,15 +1,34 @@
 import {
+  Divider,
   ListItemIcon,
   Menu,
   MenuItem,
+  Typography,
 } from "@mui/material";
 import Add from "@mui/icons-material/Add";
 import Archive from "@mui/icons-material/Archive";
 import Unarchive from "@mui/icons-material/Unarchive";
 import Delete from "@mui/icons-material/Delete";
 import ContentCopy from "@mui/icons-material/ContentCopy";
-import Info from "@mui/icons-material/Info";
 import type { Task } from "../../../../types/projects";
+
+function formatTaskTimestamp(ms: number): string {
+  return new Date(ms).toLocaleString(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+}
+
+const readOnlyMenuItemSx = {
+  opacity: 1,
+  cursor: "default",
+  flexDirection: "column",
+  alignItems: "flex-start",
+  py: 1,
+  "&.Mui-disabled": {
+    opacity: 1,
+  },
+} as const;
 
 export interface TaskItemContextMenuProps {
   open: boolean;
@@ -51,10 +70,6 @@ export default function TaskItemContextMenu({
 
   const handleDuplicate = () => {
     onDuplicate(task.id);
-    onClose();
-  };
-
-  const handleInfo = () => {
     onClose();
   };
 
@@ -103,11 +118,30 @@ export default function TaskItemContextMenu({
         </ListItemIcon>
         Duplicate
       </MenuItem>
-      <MenuItem onClick={handleInfo}>
-        <ListItemIcon>
-          <Info fontSize="small" />
-        </ListItemIcon>
-        Info
+      <Divider />
+      <MenuItem disabled disableRipple sx={readOnlyMenuItemSx}>
+        <Typography
+          variant="caption"
+          sx={{ color: "var(--scratchpad-text-muted)", display: "block", mb: 0.25 }}
+        >
+          Created
+        </Typography>
+        <Typography variant="body2" sx={{ color: "var(--tasks-panel-bg)" }}>
+          {formatTaskTimestamp(task.createdOn)}
+        </Typography>
+      </MenuItem>
+      <MenuItem disabled disableRipple sx={readOnlyMenuItemSx}>
+        <Typography
+          variant="caption"
+          sx={{ color: "var(--scratchpad-text-muted)", display: "block", mb: 0.25 }}
+        >
+          Completed
+        </Typography>
+        <Typography variant="body2" sx={{ color: "var(--tasks-panel-bg)" }}>
+          {task.completedOn != null
+            ? formatTaskTimestamp(task.completedOn)
+            : "Not completed"}
+        </Typography>
       </MenuItem>
     </Menu>
   );

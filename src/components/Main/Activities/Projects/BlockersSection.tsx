@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, IconButton, Typography } from "@mui/material";
+import { Box, IconButton, Tooltip, Typography } from "@mui/material";
 import Add from "@mui/icons-material/Add";
 import ClearAll from "@mui/icons-material/ClearAll";
 import Visibility from "@mui/icons-material/Visibility";
@@ -43,56 +43,67 @@ export default function BlockersSection({
           Blockers
         </Typography>
         {onAddBlocker && hoveredOn && (
-          <IconButton
-            size="small"
-            onClick={() => setDialogOpen(true)}
-            sx={{
-              p: 0.5,
-              width: 24,
-              height: 24,
-              flexShrink: 0,
-              borderRadius: "50%",
-              color: "var(--color-on-accent)",
-              bgcolor: "var(--projects-blockers-color)",
-              "&:hover": {
+          <Tooltip title="Add blocker" placement="top">
+            <IconButton
+              size="small"
+              onClick={() => setDialogOpen(true)}
+              sx={{
+                p: 0.5,
+                width: 24,
+                height: 24,
+                flexShrink: 0,
+                borderRadius: "50%",
+                color: "var(--color-on-accent)",
                 bgcolor: "var(--projects-blockers-color)",
-                opacity: 0.9,
-              },
-            }}
-            aria-label="Add blocker"
-          >
-            <Add sx={{ fontSize: 18 }} />
-          </IconButton>
+                "&:hover": {
+                  bgcolor: "var(--projects-blockers-color)",
+                  opacity: 0.9,
+                },
+              }}
+              aria-label="Add blocker"
+            >
+              <Add sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
         )}
         {hoveredOn && (
-          <IconButton
-            size="small"
-            onClick={() => setShowDismissed((prev) => !prev)}
-            sx={{
-              p: 0.5,
-              width: 24,
-              height: 24,
-              flexShrink: 0,
-              borderRadius: "50%",
-              color: "var(--color-on-accent)",
-              bgcolor: "var(--projects-blockers-color)",
-              "&:hover": {
-                bgcolor: "var(--projects-blockers-color)",
-                opacity: 0.9,
-              },
-            }}
-            aria-label={
+          <Tooltip
+            title={
               showDismissed
                 ? "Hide dismissed blockers"
                 : "Show dismissed blockers"
             }
+            placement="top"
           >
-            {showDismissed ? (
-              <Visibility sx={{ fontSize: 18 }} />
-            ) : (
-              <VisibilityOff sx={{ fontSize: 18 }} />
-            )}
-          </IconButton>
+            <IconButton
+              size="small"
+              onClick={() => setShowDismissed((prev) => !prev)}
+              sx={{
+                p: 0.5,
+                width: 24,
+                height: 24,
+                flexShrink: 0,
+                borderRadius: "50%",
+                color: "var(--color-on-accent)",
+                bgcolor: "var(--projects-blockers-color)",
+                "&:hover": {
+                  bgcolor: "var(--projects-blockers-color)",
+                  opacity: 0.9,
+                },
+              }}
+              aria-label={
+                showDismissed
+                  ? "Hide dismissed blockers"
+                  : "Show dismissed blockers"
+              }
+            >
+              {showDismissed ? (
+                <Visibility sx={{ fontSize: 18 }} />
+              ) : (
+                <VisibilityOff sx={{ fontSize: 18 }} />
+              )}
+            </IconButton>
+          </Tooltip>
         )}
         <Box
           sx={{
@@ -133,14 +144,16 @@ export default function BlockersSection({
                 >
                   {entry.text}
                 </Typography>
-                <IconButton
-                  size="small"
-                  onClick={() => onDismissBlocker?.(i)}
-                  sx={{ p: 0.25, color: "var(--scratchpad-text-muted)" }}
-                  aria-label="Dismiss blocker"
-                >
-                  <ClearAll sx={{ fontSize: 18 }} />
-                </IconButton>
+                <Tooltip title="Dismiss blocker" placement="top">
+                  <IconButton
+                    size="small"
+                    onClick={() => onDismissBlocker?.(i)}
+                    sx={{ p: 0.25, color: "var(--scratchpad-text-muted)" }}
+                    aria-label="Dismiss blocker"
+                  >
+                    <ClearAll sx={{ fontSize: 18 }} />
+                  </IconButton>
+                </Tooltip>
               </Box>
             );
           })}

@@ -90,6 +90,8 @@ export default function TaskItem({
     deleteTask,
     archiveTask,
     duplicateTask,
+    isTaskTracked,
+    toggleTrackedTask,
   } = useTaskActions();
   const { showSnackbar } = useSnackbarContext();
   const [isHovered, setIsHovered] = useState(false);
@@ -141,7 +143,10 @@ export default function TaskItem({
   const archived = task.isArchived ?? false;
   const showAddIcon = isHovered && addMode?.setTaskAddMode && !isEditMode;
   const showDeleteButton = isHovered && !isEditMode;
-  const showArchiveButton = isHovered && !isEditMode;
+  const showTrackButton = isHovered && !isEditMode;
+  const tracked = isTaskTracked(task.id);
+  const showTrackedTitleStyle =
+    tracked && !completed && !archived;
 
   return (
     <Box
@@ -245,11 +250,14 @@ export default function TaskItem({
               <Typography
                 variant="body1"
                 sx={{
-                  color: isHovered
-                    ? "var(--projects-metric-color)"
-                    : completed
-                      ? "var(--scratchpad-text-muted)"
-                      : "var(--scratchpad-text)",
+                  fontWeight: showTrackedTitleStyle ? 600 : undefined,
+                  color: completed
+                    ? "var(--scratchpad-text-muted)"
+                    : showTrackedTitleStyle
+                      ? "var(--tasks-complete-color)"
+                      : isHovered
+                        ? "var(--projects-metric-color)"
+                        : "var(--scratchpad-text)",
                   textDecoration: completed ? "line-through" : "none",
                 }}
               >
@@ -273,16 +281,11 @@ export default function TaskItem({
         <TaskItemActions
           task={task}
           showAddIcon={!!showAddIcon}
-          showArchiveButton={!!showArchiveButton}
+          showTrackButton={!!showTrackButton}
+          isTracked={tracked}
           showDeleteButton={!!showDeleteButton}
           onAddClick={(taskId) => addMode?.setTaskAddMode(taskId)}
-          onArchiveClick={(taskId, archived) => {
-            archiveTask(taskId, archived);
-            if (addMode?.editTaskId === task.id)
-              addMode.setEditTaskId(undefined);
-            if (addMode?.taskAddMode === task.id)
-              addMode.setTaskAddMode(undefined);
-          }}
+          onToggleTracked={(taskId) => toggleTrackedTask(taskId)}
           onDeleteClick={() => setDeleteDialogOpen(true)}
         />
       </Box>

@@ -2,6 +2,33 @@ import { useState, useEffect, useCallback } from 'react'
 import type { Task } from '../types/projects'
 
 const STORAGE_KEY = 'tasks'
+const TRACKED_STORAGE_KEY = 'tracked'
+
+interface TrackedStorage {
+  tasks: string[]
+}
+
+function getTrackedFromStorage(): string[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = localStorage.getItem(TRACKED_STORAGE_KEY)
+    if (raw === null) return []
+    const parsed = JSON.parse(raw) as unknown
+    if (parsed == null || typeof parsed !== 'object') return []
+    const o = parsed as Record<string, unknown>
+    if (!Array.isArray(o.tasks)) return []
+    if (!o.tasks.every((id): id is string => typeof id === 'string')) return []
+    return o.tasks
+  } catch {
+    return []
+  }
+}
+
+function saveTrackedToStorage(taskIds: string[]) {
+  if (typeof window === 'undefined') return
+  const payload: TrackedStorage = { tasks: taskIds }
+  localStorage.setItem(TRACKED_STORAGE_KEY, JSON.stringify(payload))
+}
 
 function isValidTask(item: unknown): item is Task {
   if (item == null || typeof item !== 'object') return false
@@ -166,8 +193,11 @@ export function useTasks(): {
   moveTask: (draggedTaskId: string, newParentTaskId: string | null) => void
   archiveTask: (taskId: string, archived?: boolean) => void
   duplicateTask: (taskId: string) => void
+  isTaskTracked: (taskId: string) => boolean
+  toggleTrackedTask: (taskId: string) => void
 } {
   const [tasks, setTasks] = useState<Task[]>(() => getTasksFromStorage() ?? getFakeTasks())
+  const [trackedTaskIds, setTrackedTaskIds] = useState<string[]>(() => getTrackedFromStorage())
 
   useEffect(() => {
     const stored = getTasksFromStorage()
@@ -179,6 +209,10 @@ export function useTasks(): {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
   }, [tasks])
+
+  useEffect(() => {
+    saveTrackedToStorage(trackedTaskIds)
+  }, [trackedTaskIds])
 
   const setTaskComplete = useCallback((taskId: string, isComplete: boolean, completeSubtasks: boolean = false) => {
     setTasks((prev) => {
@@ -229,6 +263,7 @@ export function useTasks(): {
   const deleteTask = useCallback((taskId: string) => {
     setTasks((prev) => {
       const toDelete = collectTaskAndDescendantIds(taskId, prev)
+      setTrackedTaskIds((ids) => ids.filter((id) => !toDelete.has(id)))
       return prev
         .filter((t) => !toDelete.has(t.id))
         .map((t) => ({
@@ -275,6 +310,17 @@ export function useTasks(): {
     })
   }, [])
 
+  const isTaskTracked = useCallback(
+    (taskId: string) => trackedTaskIds.includes(taskId),
+    [trackedTaskIds],
+  )
+
+  const toggleTrackedTask = useCallback((taskId: string) => {
+    setTrackedTaskIds((prev) =>
+      prev.includes(taskId) ? prev.filter((id) => id !== taskId) : [...prev, taskId],
+    )
+  }, [])
+
   const duplicateTask = useCallback((taskId: string) => {
     setTasks((prev) => {
       const source = prev.find((t) => t.id === taskId)
@@ -313,5 +359,7 @@ export function useTasks(): {
     moveTask,
     archiveTask,
     duplicateTask,
+    isTaskTracked,
+    toggleTrackedTask,
   }
 }

@@ -19,6 +19,8 @@ export interface TaskActions {
   ) => void;
   archiveTask: (taskId: string, archived?: boolean) => void;
   duplicateTask: (taskId: string) => void;
+  isTaskTracked: (taskId: string) => boolean;
+  toggleTrackedTask: (taskId: string) => void;
 }
 
 export const TaskActionsContext = createContext<TaskActions | null>(null);
