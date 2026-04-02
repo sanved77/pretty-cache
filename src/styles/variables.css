@@ -32,8 +32,8 @@
   --sidebar-heading: #ffffff;
 
   /* ScratchPad / editor theme */
-  --scratchpad-toolbar-bg: #1e2128;
-  --scratchpad-editor-bg: #1e2128;
+  --scratchpad-toolbar-bg: #0F1C22;
+  --scratchpad-editor-bg: #0F1C22;
   --scratchpad-btn-primary-bg: #007acc;
   --scratchpad-btn-primary-text: #ffffff;
   --scratchpad-text: #e0e0e0;
@@ -41,7 +41,7 @@
   --scratchpad-line-number: #858585;
   --scratchpad-separator: #3c3c3c;
   --scratchpad-btn-clear: #c75c5c;
-  --scratchpad-footer-bg: #181b20;
+  --scratchpad-footer-bg: #0F1C22;
 
   /* Projects screen */
   --projects-bg: #0F1C22;
@@ -68,4 +68,10 @@
   --link-type-design: #e57373;
   --link-type-tool: #ffc107;
   --link-type-other: #ffffff;
+
+  /* Project status pills (homepage / list) */
+  --status-open: #4caf50;
+  --status-close: #64b5f6;
+  --status-paused: #fdd835;
+  --status-blocked: #fb8c00;
 }

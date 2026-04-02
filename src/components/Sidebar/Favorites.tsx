@@ -1,18 +1,22 @@
+import { useEffect, useState } from 'react'
 import { Box, List, ListItemButton, ListItemIcon, ListItemText, Typography } from '@mui/material'
-
-/* Stub: will be replaced by Redux later. */
-const FAVORITE_COLORS: Record<string, string> = {
-  '1': 'var(--favorite-color-1)',
-  '2': 'var(--favorite-color-2)',
-  '3': 'var(--favorite-color-3)',
-}
-const STUB_FAVORITES = [
-  { id: '1', name: 'API Refactor' },
-  { id: '2', name: 'Dashboard Redesign' },
-  { id: '3', name: 'Auth Flow' },
-]
+import { NavLink } from 'react-router-dom'
+import { getProjectColor } from '../../utils/projectColor'
+import { readTrackedProjectsSnapshot } from '../../utils/trackedProjectsSnapshot'
 
 export default function Favorites() {
+  const [trackedProjects, setTrackedProjects] = useState(readTrackedProjectsSnapshot)
+
+  useEffect(() => {
+    const onUpdate = () => setTrackedProjects(readTrackedProjectsSnapshot())
+    window.addEventListener('missioncontrol-projects-updated', onUpdate)
+    return () => window.removeEventListener('missioncontrol-projects-updated', onUpdate)
+  }, [])
+
+  if (trackedProjects.length === 0) {
+    return null
+  }
+
   return (
     <>
       <Typography
@@ -28,14 +32,14 @@ export default function Favorites() {
           px: 1.5,
         }}
       >
-        FAVORITES
+        TRACKED
       </Typography>
       <List disablePadding dense>
-        {STUB_FAVORITES.map(({ id, name }) => (
+        {trackedProjects.map((project) => (
           <ListItemButton
-            key={id}
-            component="a"
-            href="#"
+            key={project.id}
+            component={NavLink}
+            to={`/projects/${project.id}`}
             sx={{
               borderRadius: 1,
               mb: 0,
@@ -52,11 +56,14 @@ export default function Favorites() {
                   width: 10,
                   height: 10,
                   borderRadius: '50%',
-                  backgroundColor: FAVORITE_COLORS[id] ?? 'var(--favorite-color-1)',
+                  backgroundColor: getProjectColor(project.id),
                 }}
               />
             </ListItemIcon>
-            <ListItemText primary={name} primaryTypographyProps={{ fontSize: '0.875rem' }} />
+            <ListItemText
+              primary={project.projectName}
+              primaryTypographyProps={{ fontSize: '0.875rem' }}
+            />
           </ListItemButton>
         ))}
       </List>

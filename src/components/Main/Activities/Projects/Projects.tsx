@@ -1,6 +1,15 @@
 import { useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Box, IconButton, TextField, Typography } from "@mui/material";
+import {
+  Box,
+  FormControl,
+  IconButton,
+  InputLabel,
+  MenuItem,
+  Select,
+  TextField,
+  Typography,
+} from "@mui/material";
 import Edit from "@mui/icons-material/Edit";
 import Check from "@mui/icons-material/Check";
 import { useTasks } from "../../../../hooks/useTasks";
@@ -11,6 +20,8 @@ import TasksPanel from "./TasksPanel";
 import BlockersSection from "./BlockersSection";
 import QuestionsSection from "./QuestionsSection";
 import LinksSection from "./LinksSection";
+import type { ProjectStatus } from "../../../../types/projects";
+import { getDisplayStatus } from "./projectStatusDisplay";
 
 export default function Projects() {
   const {
@@ -35,6 +46,7 @@ export default function Projects() {
     deleteLink,
     updateProjectName,
     updateProjectDescription,
+    updateProjectStatus,
   } = useProjects();
   const { showSnackbar } = useSnackbarContext();
   const { projectId } = useParams<{ projectId: string }>();
@@ -323,6 +335,62 @@ export default function Projects() {
                   {errorText}
                 </Typography>
               ) : null}
+
+              <FormControl
+                size="small"
+                sx={{
+                  mt: 1.5,
+                  minWidth: 180,
+                  "& .MuiInputLabel-root": {
+                    color: "var(--scratchpad-text-muted)",
+                    "&.Mui-focused": { color: "var(--projects-metric-color)" },
+                  },
+                  "& .MuiOutlinedInput-root": {
+                    bgcolor: "var(--tasks-panel-bg)",
+                    color: "var(--scratchpad-text)",
+                    "& fieldset": { borderColor: "var(--scratchpad-separator)" },
+                    "&:hover fieldset": { borderColor: "var(--projects-metric-color)" },
+                    "&.Mui-focused fieldset": { borderColor: "var(--projects-metric-color)" },
+                  },
+                  "& .MuiSvgIcon-root": { color: "var(--scratchpad-text-muted)" },
+                }}
+              >
+                <InputLabel id="project-status-label">Status</InputLabel>
+                <Select<ProjectStatus>
+                  labelId="project-status-label"
+                  label="Status"
+                  value={getDisplayStatus(selectedProject.status)}
+                  onChange={(e) =>
+                    updateProjectStatus(
+                      selectedProjectId,
+                      e.target.value as ProjectStatus,
+                    )
+                  }
+                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        bgcolor: "var(--tasks-panel-bg)",
+                        color: "var(--scratchpad-text)",
+                        border: "1px solid var(--scratchpad-separator)",
+                        "& .MuiMenuItem-root:hover": {
+                          bgcolor: "var(--tasks-highlight-bg)",
+                        },
+                        "& .MuiMenuItem-root.Mui-selected": {
+                          bgcolor: "rgba(15, 166, 242, 0.15)",
+                        },
+                        "& .MuiMenuItem-root.Mui-selected:hover": {
+                          bgcolor: "var(--tasks-highlight-bg)",
+                        },
+                      },
+                    },
+                  }}
+                >
+                  <MenuItem value="Open">Open</MenuItem>
+                  <MenuItem value="Close">Close</MenuItem>
+                  <MenuItem value="Paused">Paused</MenuItem>
+                  <MenuItem value="Blocked">Blocked</MenuItem>
+                </Select>
+              </FormControl>
             </Box>
           </>
         ) : null}

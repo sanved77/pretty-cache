@@ -1,33 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { Task } from '../types/projects'
 
-const STORAGE_KEY = 'tasks'
-const TRACKED_STORAGE_KEY = 'tracked'
+import { readTrackedStorage, writeTrackedTasks } from '../utils/trackedStorage'
 
-interface TrackedStorage {
-  tasks: string[]
-}
+const STORAGE_KEY = 'tasks'
 
 function getTrackedFromStorage(): string[] {
-  if (typeof window === 'undefined') return []
-  try {
-    const raw = localStorage.getItem(TRACKED_STORAGE_KEY)
-    if (raw === null) return []
-    const parsed = JSON.parse(raw) as unknown
-    if (parsed == null || typeof parsed !== 'object') return []
-    const o = parsed as Record<string, unknown>
-    if (!Array.isArray(o.tasks)) return []
-    if (!o.tasks.every((id): id is string => typeof id === 'string')) return []
-    return o.tasks
-  } catch {
-    return []
-  }
-}
-
-function saveTrackedToStorage(taskIds: string[]) {
-  if (typeof window === 'undefined') return
-  const payload: TrackedStorage = { tasks: taskIds }
-  localStorage.setItem(TRACKED_STORAGE_KEY, JSON.stringify(payload))
+  return readTrackedStorage().tasks
 }
 
 function isValidTask(item: unknown): item is Task {
@@ -211,7 +190,7 @@ export function useTasks(): {
   }, [tasks])
 
   useEffect(() => {
-    saveTrackedToStorage(trackedTaskIds)
+    writeTrackedTasks(trackedTaskIds)
   }, [trackedTaskIds])
 
   const setTaskComplete = useCallback((taskId: string, isComplete: boolean, completeSubtasks: boolean = false) => {

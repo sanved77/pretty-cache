@@ -1,3 +1,5 @@
+export type ProjectStatus = 'Open' | 'Close' | 'Paused' | 'Blocked'
+
 export interface LinkObj {
   id: string
   label: string
@@ -31,4 +33,5 @@ export interface Project {
   createdOn: number
   deadlineOn?: number
   completedOn?: number
+  status?: ProjectStatus
 }

@@ -16,42 +16,15 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import type { Task } from "../../../../types/projects";
 import { isCompleted } from "../../../../utils/taskCompletion";
+import {
+  getProjectCompletion,
+  getProjectTaskIds,
+} from "../../../../utils/projectCompletion";
 import { useSnackbarContext } from "../../../../contexts/useSnackbarContext";
 import { useTaskActions } from "./useTaskActions";
 import { TaskAddModeContext } from "./TaskAddModeContext";
 import AddTaskInput from "./AddTaskInput";
 import TaskItem, { TASK_TYPE } from "./TaskItem";
-
-function getProjectTaskIds(tasks: Task[], projectId: string): Set<string> {
-  const byProject = tasks.filter((t) => t.projectID === projectId);
-  const ids = new Set<string>();
-  function add(task: Task) {
-    ids.add(task.id);
-    for (const id of task.subTasks ?? []) {
-      const child =
-        byProject.find((t) => t.id === id) ?? tasks.find((t) => t.id === id);
-      if (child) add(child);
-    }
-  }
-  byProject.forEach(add);
-  return ids;
-}
-
-function getProjectCompletion(
-  tasks: Task[],
-  projectId: string,
-  taskMap: Map<string, Task>,
-): { completed: number; total: number } {
-  const ids = getProjectTaskIds(tasks, projectId);
-  let completed = 0;
-  // eslint-disable-next-line prefer-const -- keep let for future dynamic updates
-  let total = ids.size;
-  for (const id of ids) {
-    const t = taskMap.get(id);
-    if (t && isCompleted(t, taskMap) === "completed") completed++;
-  }
-  return { completed, total };
-}
 
 function getRootTasks(tasks: Task[], projectId: string): Task[] {
   const projectIds = getProjectTaskIds(tasks, projectId);

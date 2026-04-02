@@ -7,6 +7,17 @@ import 'react-resizable/css/styles.css'
 import './styles/variables.css'
 import './index.css'
 import App from './App.tsx'
+import {
+  exportMissionControlStorage,
+  importMissionControlStorage,
+} from './dev/missionControlStorage'
+
+if (import.meta.env.DEV) {
+  window.missionControl = {
+    export: exportMissionControlStorage,
+    importData: importMissionControlStorage,
+  }
+}
 
 const theme = createTheme({
   typography: {

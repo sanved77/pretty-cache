@@ -80,7 +80,7 @@ export default function QuestionsSection({
           }}
         />
       </Box>
-      {questions.length > 0 && (
+      {questions.length > 0 ? (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
           {questions.map((text, i) => (
             <Box
@@ -132,6 +132,17 @@ export default function QuestionsSection({
             </Box>
           ))}
         </Box>
+      ) : (
+        <Typography
+          variant="body2"
+          sx={{
+            p: 1.5,
+            color: "var(--scratchpad-text-muted)",
+            fontStyle: "italic",
+          }}
+        >
+          No open questions
+        </Typography>
       )}
       <ContentAddDialog
         open={dialogOpen}

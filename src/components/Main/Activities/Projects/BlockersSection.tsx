@@ -115,7 +115,7 @@ export default function BlockersSection({
           }}
         />
       </Box>
-      {(showDismissed ? blockers : visible).length > 0 && (
+      {(showDismissed ? blockers : visible).length > 0 ? (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
           {blockers.map((entry, i) => {
             if (entry.dismissed && !showDismissed) return null;
@@ -158,6 +158,17 @@ export default function BlockersSection({
             );
           })}
         </Box>
+      ) : (
+        <Typography
+          variant="body2"
+          sx={{
+            p: 1.5,
+            color: "var(--scratchpad-text-muted)",
+            fontStyle: "italic",
+          }}
+        >
+          Nothing blocking now
+        </Typography>
       )}
       <ContentAddDialog
         open={dialogOpen}

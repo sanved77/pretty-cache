@@ -173,35 +173,47 @@ export default function LinksSection({
         />
       </Box>
       <Box sx={{ display: "flex", flexDirection: "row", flexWrap: "wrap", gap: 1, width: "fit-content" }}>
-        {sorted.length > 0 &&
-        sorted.map((link) => {
-          const config = getConfigForType(link.type);
-          const Icon = config.Icon;
-          return (
-            <Link
-              key={link.id}
-              href={link.url}
-              target="_blank"
-              onContextMenu={(e) => handleContextMenu(e, link)}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 0.75,
-                px: 1.5,
-                py: 0.75,
-                borderRadius: 1,
-                bgcolor: "var(--tasks-panel-bg)",
-                color: "var(--scratchpad-text)",
-                "&:hover": { bgcolor: "var(--tasks-panel-bg)" },
-              }}
-            >
-              <Icon
-                sx={{ fontSize: 18, color: config.iconColor }}
-              />
-              <Typography variant="body2">{link.label}</Typography>
-            </Link>
-          );
-        })}
+        {sorted.length === 0 ? (
+          <Typography
+            variant="body2"
+            sx={{
+              p: 1.5,
+              color: "var(--scratchpad-text-muted)",
+              fontStyle: "italic",
+            }}
+          >
+            No links
+          </Typography>
+        ) : (
+          sorted.map((link) => {
+            const config = getConfigForType(link.type);
+            const Icon = config.Icon;
+            return (
+              <Link
+                key={link.id}
+                href={link.url}
+                target="_blank"
+                onContextMenu={(e) => handleContextMenu(e, link)}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.75,
+                  px: 1.5,
+                  py: 0.75,
+                  borderRadius: 1,
+                  bgcolor: "var(--tasks-panel-bg)",
+                  color: "var(--scratchpad-text)",
+                  "&:hover": { bgcolor: "var(--tasks-panel-bg)" },
+                }}
+              >
+                <Icon
+                  sx={{ fontSize: 18, color: config.iconColor }}
+                />
+                <Typography variant="body2">{link.label}</Typography>
+              </Link>
+            );
+          })
+        )}
       </Box>
       <LinkAddDialog
         key={editLink?.id ?? "new"}
