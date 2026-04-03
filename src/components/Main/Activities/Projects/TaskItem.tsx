@@ -142,7 +142,7 @@ export default function TaskItem({
   const sortedChildren = sortChildTasks(subTaskIds, taskMap);
   const archived = task.isArchived ?? false;
   const showAddIcon = isHovered && addMode?.setTaskAddMode && !isEditMode;
-  const showDeleteButton = isHovered && !isEditMode;
+  const showArchiveButton = isHovered && !isEditMode;
   const showTrackButton = isHovered && !isEditMode;
   const tracked = isTaskTracked(task.id);
   const showTrackedTitleStyle =
@@ -283,10 +283,16 @@ export default function TaskItem({
           showAddIcon={!!showAddIcon}
           showTrackButton={!!showTrackButton}
           isTracked={tracked}
-          showDeleteButton={!!showDeleteButton}
+          showArchiveButton={!!showArchiveButton}
           onAddClick={(taskId) => addMode?.setTaskAddMode(taskId)}
           onToggleTracked={(taskId) => toggleTrackedTask(taskId)}
-          onDeleteClick={() => setDeleteDialogOpen(true)}
+          onArchiveClick={() => {
+            archiveTask(task.id, !(task.isArchived ?? false));
+            if (addMode?.editTaskId === task.id)
+              addMode.setEditTaskId(undefined);
+            if (addMode?.taskAddMode === task.id)
+              addMode.setTaskAddMode(undefined);
+          }}
         />
       </Box>
       <TaskItemContextMenu

@@ -27,6 +27,7 @@ import type { ProjectStatus } from "../../../../types/projects";
 import { getDisplayStatus } from "./projectStatusDisplay";
 import { formatProjectDeadlineRemaining } from "../../../../utils/projectDeadlineRemaining";
 import { endOfDay } from "../../../../utils/dateRangeFilter";
+import { openLink } from "../../../../utils/openLink";
 
 function deadlineMsToDateInputValue(ms: number): string {
   const d = new Date(ms);
@@ -71,6 +72,7 @@ export default function Projects() {
     addQuestion,
     addLink,
     updateLink,
+    incrementLinkVisits,
     deleteLink,
     isLinkTracked,
     toggleTrackedLink,
@@ -545,6 +547,7 @@ export default function Projects() {
               }}
               isLinkTracked={isLinkTracked}
               onToggleLinkTracked={toggleTrackedLink}
+              onLinkClick={(id, url) => openLink(id, url, incrementLinkVisits)}
             />
             <BlockersSection
               blockers={selectedProject.blockers}

@@ -9,6 +9,7 @@ export type TrackedFavoriteLinkRow = {
   label: string
   url: string
   type?: string
+  visits: number
 }
 
 /** Resolve favorite link ids from `tracked` against projects in localStorage (same source as useProjects). */
@@ -32,6 +33,7 @@ export function readTrackedFavoriteLinksSnapshot(): TrackedFavoriteLinkRow[] {
             label: link.label,
             url: link.url,
             type: link.type,
+            visits: link.visits ?? 0,
           })
           break
         }

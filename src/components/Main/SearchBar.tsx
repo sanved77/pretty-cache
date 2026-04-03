@@ -1,8 +1,11 @@
 import { Box, TextField } from '@mui/material'
+import { useLocation } from 'react-router-dom'
 
 const SEARCHBAR_HEIGHT = 65
 
 export default function SearchBar() {
+  const isTodayPage = useLocation().pathname === '/'
+
   return (
     <Box
       sx={{
@@ -12,7 +15,7 @@ export default function SearchBar() {
         flexDirection: 'column',
         px: 2,
         justifyContent: 'center',
-        backgroundColor: 'var(--projects-bg)',
+        backgroundColor: isTodayPage ? '#0d1117' : 'var(--projects-bg)',
       }}
     >
       <Box
@@ -36,8 +39,8 @@ export default function SearchBar() {
                 sx={{
                   fontFamily: '"SF Mono", Consolas, Monaco, monospace',
                   fontSize: 13,
-                  color: 'var(--scratchpad-text-muted)',
-                  backgroundColor: 'var(--searchbar-shortcut-bg)',
+                  color: isTodayPage ? '#8b949e' : 'var(--scratchpad-text-muted)',
+                  backgroundColor: isTodayPage ? '#21262d' : 'var(--searchbar-shortcut-bg)',
                   borderRadius: 3,
                   px: 1,
                   py: 0.25,
@@ -48,14 +51,14 @@ export default function SearchBar() {
                 </Box>
               ),
               sx: {
-                bgcolor: 'var(--tasks-panel-bg)',
+                bgcolor: isTodayPage ? '#161b22' : 'var(--tasks-panel-bg)',
                 borderRadius: 9999,
                 '& fieldset': { border: 'none' },
                 '& input': {
-                  color: 'var(--scratchpad-text)',
+                  color: isTodayPage ? '#e6edf3' : 'var(--scratchpad-text)',
                   py: 1.25,
                   '&::placeholder': {
-                    color: 'var(--scratchpad-text-muted)',
+                    color: isTodayPage ? '#484f58' : 'var(--scratchpad-text-muted)',
                     opacity: 1,
                   },
                 },

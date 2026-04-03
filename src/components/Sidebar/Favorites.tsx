@@ -26,6 +26,7 @@ import {
 } from '../../utils/trackedFavoriteLinksSnapshot'
 import LinkAddDialog from '../Main/Activities/Projects/LinkAddDialog'
 import LinkContextMenu from '../Main/Activities/Projects/LinkContextMenu'
+import { openLink } from '../../utils/openLink'
 
 const sectionHeadingSx = {
   fontSize: '0.65rem',
@@ -44,6 +45,7 @@ function rowToLinkObj(row: TrackedFavoriteLinkRow): LinkObj {
     label: row.label,
     url: row.url,
     type: row.type,
+    visits: row.visits ?? 0,
   }
 }
 
@@ -53,6 +55,7 @@ export default function Favorites() {
     updateLink,
     isLinkTracked,
     toggleTrackedLink,
+    incrementLinkVisits,
   } = useProjects()
   const { showSnackbar } = useSnackbarContext()
 
@@ -191,6 +194,10 @@ export default function Favorites() {
                 href={row.url}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={(e) => {
+                  e.preventDefault()
+                  openLink(row.linkId, row.url, incrementLinkVisits)
+                }}
                 onContextMenu={(e) => handleFavoriteContextMenu(e, row)}
                 sx={{
                   borderRadius: 1,

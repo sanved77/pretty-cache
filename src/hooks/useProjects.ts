@@ -7,7 +7,11 @@ const STORAGE_KEY = 'projects'
 const PROJECT_STATUSES: ProjectStatus[] = ['Open', 'Close', 'Paused', 'Blocked']
 
 function ensureLinkIds(links: LinkObj[]): LinkObj[] {
-  return links.map((l) => (l.id ? l : { ...l, id: crypto.randomUUID() }))
+  return links.map((l) =>
+    l.id
+      ? { ...l, visits: l.visits ?? 0 }
+      : { ...l, id: crypto.randomUUID(), visits: l.visits ?? 0 },
+  )
 }
 
 function isValidBlockerEntry(item: unknown): item is { text: string; dismissed?: boolean } {
@@ -76,6 +80,7 @@ export function useProjects(): {
   addQuestion: (projectId: string, text: string) => void
   addLink: (projectId: string, link: { label: string; url: string; type?: string }) => void
   updateLink: (projectId: string, linkId: string, update: { label: string; url: string; type: string }) => void
+  incrementLinkVisits: (linkId: string) => void
   deleteLink: (projectId: string, linkId: string) => void
   updateProjectName: (projectId: string, projectName: string) => void
   updateProjectDescription: (projectId: string, description: string) => void
@@ -167,7 +172,7 @@ export function useProjects(): {
     setProjects((prev) =>
       prev.map((p) => {
         if (p.id !== projectId) return p
-        const newLink = { ...link, id: crypto.randomUUID() }
+        const newLink = { ...link, id: crypto.randomUUID(), visits: 0 }
         const links = [...(p.links ?? []), newLink]
         return { ...p, links }
       })
@@ -188,6 +193,19 @@ export function useProjects(): {
     },
     []
   )
+
+  const incrementLinkVisits = useCallback((linkId: string) => {
+    setProjects((prev) =>
+      prev.map((p) => {
+        const hasLink = (p.links ?? []).some((l) => l.id === linkId)
+        if (!hasLink) return p
+        const links = (p.links ?? []).map((l) =>
+          l.id === linkId ? { ...l, visits: (l.visits ?? 0) + 1 } : l
+        )
+        return { ...p, links }
+      }),
+    )
+  }, [])
 
   const deleteLink = useCallback((projectId: string, linkId: string) => {
     setProjects((prev) =>
@@ -256,6 +274,7 @@ export function useProjects(): {
     addQuestion,
     addLink,
     updateLink,
+    incrementLinkVisits,
     deleteLink,
     updateProjectName,
     updateProjectDescription,

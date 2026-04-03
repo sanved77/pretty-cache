@@ -1,6 +1,7 @@
 import { IconButton, Stack, Tooltip } from "@mui/material";
 import Add from "@mui/icons-material/Add";
-import Delete from "@mui/icons-material/Delete";
+import Archive from "@mui/icons-material/Archive";
+import Unarchive from "@mui/icons-material/Unarchive";
 import PushPin from "@mui/icons-material/PushPin";
 import type { Task } from "../../../../types/projects";
 
@@ -11,17 +12,6 @@ const accentButtonSx = {
   bgcolor: "var(--projects-metric-color)",
   "&:hover": {
     bgcolor: "var(--projects-metric-color)",
-  },
-  borderRadius: "4px",
-} as const;
-
-const deleteButtonSx = {
-  color: "var(--color-on-accent)",
-  p: 0.25,
-  mt: 0.25,
-  bgcolor: "var(--projects-error-color)",
-  "&:hover": {
-    bgcolor: "var(--projects-error-color)",
   },
   borderRadius: "4px",
 } as const;
@@ -44,10 +34,10 @@ export interface TaskItemActionsProps {
   showAddIcon: boolean;
   showTrackButton: boolean;
   isTracked: boolean;
-  showDeleteButton: boolean;
+  showArchiveButton: boolean;
   onAddClick: (taskId: string) => void;
   onToggleTracked: (taskId: string) => void;
-  onDeleteClick: () => void;
+  onArchiveClick: () => void;
 }
 
 export default function TaskItemActions({
@@ -55,11 +45,15 @@ export default function TaskItemActions({
   showAddIcon,
   showTrackButton,
   isTracked,
-  showDeleteButton,
+  showArchiveButton,
   onAddClick,
   onToggleTracked,
-  onDeleteClick,
+  onArchiveClick,
 }: TaskItemActionsProps) {
+  const archived = task.isArchived ?? false;
+  const archiveTooltip = archived ? "Unarchive task" : "Archive task";
+  const archiveAria = archived ? "Unarchive task" : "Archive task";
+
   const trackButton = (
     <IconButton
       size="small"
@@ -100,18 +94,22 @@ export default function TaskItemActions({
           {trackButton}
         </Tooltip>
       )}
-      {showDeleteButton && (
-        <Tooltip title="Delete task" placement="top">
+      {showArchiveButton && (
+        <Tooltip title={archiveTooltip} placement="top">
           <IconButton
             size="small"
             onClick={(e) => {
               e.stopPropagation();
-              onDeleteClick();
+              onArchiveClick();
             }}
-            sx={deleteButtonSx}
-            aria-label="Delete task"
+            sx={accentButtonSx}
+            aria-label={archiveAria}
           >
-            <Delete sx={{ fontSize: 18 }} />
+            {archived ? (
+              <Unarchive sx={{ fontSize: 18 }} />
+            ) : (
+              <Archive sx={{ fontSize: 18 }} />
+            )}
           </IconButton>
         </Tooltip>
       )}

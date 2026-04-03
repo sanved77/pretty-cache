@@ -65,6 +65,8 @@ export interface LinksSectionProps {
   onDeleteLink?: (linkId: string) => void;
   isLinkTracked?: (linkId: string) => boolean;
   onToggleLinkTracked?: (linkId: string) => void;
+  /** When set, left-click uses this instead of native navigation (visit tracking + recents). */
+  onLinkClick?: (linkId: string, url: string) => void;
 }
 
 export default function LinksSection({
@@ -74,6 +76,7 @@ export default function LinksSection({
   onDeleteLink,
   isLinkTracked,
   onToggleLinkTracked,
+  onLinkClick,
 }: LinksSectionProps) {
   const [hoveredOn, setHoveredOn] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -197,6 +200,12 @@ export default function LinksSection({
                 key={link.id}
                 href={link.url}
                 target="_blank"
+                onClick={(e) => {
+                  if (onLinkClick) {
+                    e.preventDefault();
+                    onLinkClick(link.id, link.url);
+                  }
+                }}
                 onContextMenu={(e) => handleContextMenu(e, link)}
                 sx={{
                   display: "flex",

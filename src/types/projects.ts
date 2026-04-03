@@ -1,10 +1,11 @@
 export type ProjectStatus = 'Open' | 'Close' | 'Paused' | 'Blocked'
 
-export interface LinkObj {
+export type LinkObj = {
   id: string
   label: string
   url: string
   type?: string
+  visits: number
 }
 
 export interface BlockerEntry {
