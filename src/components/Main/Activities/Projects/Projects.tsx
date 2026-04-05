@@ -1,7 +1,13 @@
-import { useMemo, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useMemo, useRef, useState, useCallback } from "react";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import {
   Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   FormControl,
   IconButton,
   InputLabel,
@@ -61,6 +67,7 @@ export default function Projects() {
     addTask,
     updateTask,
     deleteTask,
+    removeTasksForProject,
     moveTask,
     archiveTask,
     duplicateTask,
@@ -81,10 +88,24 @@ export default function Projects() {
     updateProjectDescription,
     updateProjectStatus,
     updateProjectDeadline,
+    deleteProject,
   } = useProjects();
-  const { getBlockersForProject, addBlocker, dismissBlocker } = useBlockers();
-  const { getQuestionsForProject, addQuestion, resolveQuestion, unresolveQuestion } = useQuestions();
+  const {
+    getBlockersForProject,
+    addBlocker,
+    dismissBlocker,
+    undismissBlocker,
+    removeBlockersForProject,
+  } = useBlockers();
+  const {
+    getQuestionsForProject,
+    addQuestion,
+    resolveQuestion,
+    unresolveQuestion,
+    removeQuestionsForProject,
+  } = useQuestions();
   const { showSnackbar } = useSnackbarContext();
+  const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
   const selectedProjectId = projectId ?? "";
   const selectedProject = useMemo(
@@ -101,8 +122,24 @@ export default function Projects() {
   >(null);
   const [errorText, setErrorText] = useState<string | null>(null);
   const [editingDeadline, setEditingDeadline] = useState(false);
+  const [deleteProjectDialogOpen, setDeleteProjectDialogOpen] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
   const descRef = useRef<HTMLInputElement>(null);
+
+  const deleteProjectWithCascade = useCallback(
+    (id: string) => {
+      removeTasksForProject(id);
+      removeBlockersForProject(id);
+      removeQuestionsForProject(id);
+      deleteProject(id);
+    },
+    [
+      removeTasksForProject,
+      removeBlockersForProject,
+      removeQuestionsForProject,
+      deleteProject,
+    ],
+  );
 
   const taskActionsValue = useMemo(
     () => ({
@@ -515,9 +552,70 @@ export default function Projects() {
                   </Box>
                 )}
               </Box>
+
+              <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}>
+                <Button
+                  size="small"
+                  color="inherit"
+                  onClick={() => setDeleteProjectDialogOpen(true)}
+                  sx={{
+                    color: "var(--scratchpad-text-muted)",
+                    fontSize: "0.75rem",
+                    textTransform: "none",
+                    minWidth: 0,
+                    opacity: 0.8,
+                    fontWeight: 400,
+                    "&:hover": {
+                      opacity: 1,
+                      color: "var(--projects-error-color)",
+                      backgroundColor: "transparent",
+                    },
+                  }}
+                >
+                  Delete project
+                </Button>
+              </Box>
             </Box>
           </>
         ) : null}
+
+        <Dialog
+          open={deleteProjectDialogOpen}
+          onClose={() => setDeleteProjectDialogOpen(false)}
+          aria-labelledby="project-page-delete-dialog-title"
+          aria-describedby="project-page-delete-dialog-description"
+        >
+          <DialogTitle id="project-page-delete-dialog-title">
+            Delete project?
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText id="project-page-delete-dialog-description">
+              {selectedProject
+                ? `"${selectedProject.projectName}" will be removed. All tasks, blockers, questions, and links for this project will be deleted. This cannot be undone.`
+                : ""}
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setDeleteProjectDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              color="error"
+              variant="contained"
+              onClick={() => {
+                if (selectedProjectId) {
+                  deleteProjectWithCascade(selectedProjectId);
+                  showSnackbar("success", "Project deleted");
+                  setDeleteProjectDialogOpen(false);
+                  navigate("/projects");
+                }
+              }}
+            >
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
+
         <Box
           sx={{
             flex: 1,
@@ -555,6 +653,10 @@ export default function Projects() {
             <BlockersSection
               blockers={getBlockersForProject(selectedProjectId)}
               onDismissBlocker={(blockerId) => dismissBlocker(blockerId)}
+              onUndismissBlocker={(blockerId) => {
+                undismissBlocker(blockerId);
+                showSnackbar("success", "Blocker restored");
+              }}
               onAddBlocker={(text) => {
                 const id = addBlocker(selectedProjectId, text);
                 addBlockerIdToProject(selectedProjectId, id);

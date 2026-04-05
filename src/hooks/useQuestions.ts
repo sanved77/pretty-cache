@@ -63,5 +63,16 @@ export function useQuestions() {
     )
   }, [])
 
-  return { questions, getQuestionsForProject, addQuestion, resolveQuestion, unresolveQuestion }
+  const removeQuestionsForProject = useCallback((projectId: string) => {
+    setQuestions((prev) => prev.filter((q) => q.projectId !== projectId))
+  }, [])
+
+  return {
+    questions,
+    getQuestionsForProject,
+    addQuestion,
+    resolveQuestion,
+    unresolveQuestion,
+    removeQuestionsForProject,
+  }
 }

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Box, IconButton, Tooltip, Typography } from "@mui/material";
 import Add from "@mui/icons-material/Add";
 import ClearAll from "@mui/icons-material/ClearAll";
+import Undo from "@mui/icons-material/Undo";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import type { Blocker } from "../../../../types/projects";
@@ -16,12 +17,14 @@ import ContentAddDialog from "./ContentAddDialog";
 export interface BlockersSectionProps {
   blockers: Blocker[];
   onDismissBlocker?: (blockerId: string) => void;
+  onUndismissBlocker?: (blockerId: string) => void;
   onAddBlocker?: (text: string) => void;
 }
 
 export default function BlockersSection({
   blockers,
   onDismissBlocker,
+  onUndismissBlocker,
   onAddBlocker,
 }: BlockersSectionProps) {
   const [hoveredOn, setHoveredOn] = useState(false);
@@ -141,7 +144,7 @@ export default function BlockersSection({
                 >
                   {entry.text}
                 </Typography>
-                {!isDismissed && (
+                {!isDismissed ? (
                   <Tooltip title="Dismiss blocker" placement="top">
                     <IconButton
                       size="small"
@@ -150,6 +153,17 @@ export default function BlockersSection({
                       aria-label="Dismiss blocker"
                     >
                       <ClearAll sx={{ fontSize: 18 }} />
+                    </IconButton>
+                  </Tooltip>
+                ) : (
+                  <Tooltip title="Restore blocker" placement="top">
+                    <IconButton
+                      size="small"
+                      onClick={() => onUndismissBlocker?.(entry.id)}
+                      sx={{ p: 0.25, color: "var(--scratchpad-text-muted)" }}
+                      aria-label="Restore blocker"
+                    >
+                      <Undo sx={{ fontSize: 18 }} />
                     </IconButton>
                   </Tooltip>
                 )}

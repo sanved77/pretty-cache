@@ -1,4 +1,11 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+  type ReactElement,
+} from 'react'
 import { Box, TextField, IconButton, Snackbar } from '@mui/material'
 import AutoAwesome from '@mui/icons-material/AutoAwesome'
 import ChevronLeft from '@mui/icons-material/ChevronLeft'
@@ -139,12 +146,20 @@ function LogHeader({
 
 function LogInput({ onSubmit }: { onSubmit: (text: string) => void }) {
   const [value, setValue] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const handler = () => inputRef.current?.focus()
+    window.addEventListener('focus-log-input', handler)
+    return () => window.removeEventListener('focus-log-input', handler)
+  }, [])
 
   return (
     <TextField
       fullWidth
       placeholder="What are you working on right now..."
       value={value}
+      inputRef={inputRef}
       onChange={(e) => setValue(e.target.value)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' && value.trim()) {
@@ -364,7 +379,7 @@ function LogTimeline({
     )
   }
 
-  const elements: JSX.Element[] = []
+  const elements: ReactElement[] = []
   let lastDateStr: string | null = null
 
   for (const entry of filteredLogs) {

@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo, useCallback, type KeyboardEvent } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef, type KeyboardEvent } from 'react'
+import { USER_NAME_CHANGED_EVENT } from '../../../../dev/missionControlStorage'
 import {
   Box,
   Typography,
@@ -29,6 +30,7 @@ import SectionTitle from '../../../shared/SectionTitle'
 import { cardSx } from '../../../../styles/cardSx'
 import { APP_FONT_FAMILY } from '../../../../styles/appFont'
 import { SECTION_HEADER_COLORS } from '../../../../styles/sectionHeaderSx'
+import { useSnackbarContext } from '../../../../contexts/useSnackbarContext'
 
 const MONO = APP_FONT_FAMILY
 
@@ -251,16 +253,28 @@ function FocusCard({
 
 function TodaysPlan() {
   const { items, addItem, toggleItem } = useToday()
+  const { showSnackbar } = useSnackbarContext()
   const [input, setInput] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const handler = () => inputRef.current?.focus()
+    window.addEventListener('focus-today-input', handler)
+    return () => window.removeEventListener('focus-today-input', handler)
+  }, [])
 
   const handleKey = useCallback(
     (e: KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'Enter') {
-        addItem(input)
+        const trimmed = input.trim()
+        if (trimmed) {
+          addItem(input)
+          showSnackbar('success', "Added to today's plan")
+        }
         setInput('')
       }
     },
-    [addItem, input],
+    [addItem, input, showSnackbar],
   )
 
   return (
@@ -272,6 +286,7 @@ function TodaysPlan() {
         fullWidth
         size="small"
         value={input}
+        inputRef={inputRef}
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={handleKey}
         slotProps={{
@@ -563,16 +578,28 @@ function ContextLinks({ projects, incrementLinkVisits }: { projects: Project[]; 
 
 function ParkingLotSection() {
   const { items, addItem } = useParkingLot()
+  const { showSnackbar } = useSnackbarContext()
   const [input, setInput] = useState('')
+  const parkingInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const handler = () => parkingInputRef.current?.focus()
+    window.addEventListener('focus-parking-input', handler)
+    return () => window.removeEventListener('focus-parking-input', handler)
+  }, [])
 
   const handleKey = useCallback(
     (e: KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'Enter') {
-        addItem(input)
+        const trimmed = input.trim()
+        if (trimmed) {
+          addItem(input)
+          showSnackbar('success', 'Added to parking lot')
+        }
         setInput('')
       }
     },
-    [addItem, input],
+    [addItem, input, showSnackbar],
   )
 
   return (
@@ -585,6 +612,7 @@ function ParkingLotSection() {
           fullWidth
           size="small"
           value={input}
+          inputRef={parkingInputRef}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKey}
           slotProps={{
@@ -601,7 +629,11 @@ function ParkingLotSection() {
           <IconButton
             size="small"
             onClick={() => {
-              addItem(input)
+              const trimmed = input.trim()
+              if (trimmed) {
+                addItem(input)
+                showSnackbar('success', 'Added to parking lot')
+              }
               setInput('')
             }}
             sx={{ color: '#a78bfa' }}
@@ -656,7 +688,16 @@ export default function Today() {
   const { tasks, trackedTaskId } = useTasks()
   const { projects, trackedProjectIds, incrementLinkVisits } = useProjects()
 
-  const name = useMemo(() => localStorage.getItem('userFullName') ?? '', [])
+  const [name, setName] = useState(
+    () => localStorage.getItem('userFullName') ?? '',
+  )
+  useEffect(() => {
+    const onNameChange = () =>
+      setName(localStorage.getItem('userFullName') ?? '')
+    window.addEventListener(USER_NAME_CHANGED_EVENT, onNameChange)
+    return () =>
+      window.removeEventListener(USER_NAME_CHANGED_EVENT, onNameChange)
+  }, [])
 
   const trackedTask = useMemo(
     () => (trackedTaskId ? tasks.find((t) => t.id === trackedTaskId) : undefined),

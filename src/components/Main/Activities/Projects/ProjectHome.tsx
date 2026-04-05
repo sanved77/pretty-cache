@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Box,
@@ -19,8 +19,14 @@ import {
   TextField,
   Tooltip,
   Typography,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from "@mui/material";
 import Add from "@mui/icons-material/Add";
+import DeleteOutline from "@mui/icons-material/DeleteOutline";
 import Search from "@mui/icons-material/Search";
 import ChevronRight from "@mui/icons-material/ChevronRight";
 import PushPin from "@mui/icons-material/PushPin";
@@ -34,6 +40,7 @@ import "react-date-range/dist/theme/default.css";
 import { useProjects } from "../../../../hooks/useProjects";
 import { useTasks } from "../../../../hooks/useTasks";
 import { useBlockers } from "../../../../hooks/useBlockers";
+import { useQuestions } from "../../../../hooks/useQuestions";
 import {
   SECTION_HEADER_COLORS,
   sectionHeaderRowSx,
@@ -67,16 +74,33 @@ type ProjectsLocationState = { openCreateProject?: boolean } | null;
 export default function ProjectHome() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { tasks } = useTasks();
+  const { tasks, removeTasksForProject } = useTasks();
   const {
     projects,
     trackedProjectIds,
     toggleTrackedProject,
     isProjectTracked,
     createProject,
+    deleteProject,
   } = useProjects();
   const { showSnackbar } = useSnackbarContext();
-  const { blockers: allBlockers } = useBlockers();
+  const { blockers: allBlockers, removeBlockersForProject } = useBlockers();
+  const { removeQuestionsForProject } = useQuestions();
+
+  const deleteProjectWithCascade = useCallback(
+    (projectId: string) => {
+      removeTasksForProject(projectId);
+      removeBlockersForProject(projectId);
+      removeQuestionsForProject(projectId);
+      deleteProject(projectId);
+    },
+    [
+      removeTasksForProject,
+      removeBlockersForProject,
+      removeQuestionsForProject,
+      deleteProject,
+    ],
+  );
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -93,6 +117,7 @@ export default function ProjectHome() {
     endDate: new Date(),
     key: "selection",
   });
+  const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
 
   useEffect(() => {
     const state = location.state as ProjectsLocationState;
@@ -728,36 +753,61 @@ export default function ProjectHome() {
                   </Typography>
                 </TableCell>
                 <TableCell align="right">
-                  <Tooltip
-                    title={tracked ? "Untrack project" : "Track project"}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "flex-end",
+                      gap: 0.25,
+                    }}
                   >
-                    <IconButton
-                      size="small"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const wasTracked = isProjectTracked(project.id);
-                        toggleTrackedProject(project.id);
-                        showSnackbar(
-                          "success",
-                          wasTracked ? "Project untracked" : "Project tracked",
-                        );
-                      }}
-                      sx={{
-                        color: tracked
-                          ? "var(--tasks-complete-color)"
-                          : "var(--scratchpad-text-muted)",
-                      }}
-                      aria-label={tracked ? "Untrack project" : "Track project"}
+                    <Tooltip
+                      title={tracked ? "Untrack project" : "Track project"}
                     >
-                      <PushPin
-                        sx={{
-                          fontSize: 20,
-                          transform: tracked ? "none" : "rotate(45deg)",
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const wasTracked = isProjectTracked(project.id);
+                          toggleTrackedProject(project.id);
+                          showSnackbar(
+                            "success",
+                            wasTracked ? "Project untracked" : "Project tracked",
+                          );
                         }}
-                      />
-                    </IconButton>
-                  </Tooltip>
+                        sx={{
+                          color: tracked
+                            ? "var(--tasks-complete-color)"
+                            : "var(--scratchpad-text-muted)",
+                        }}
+                        aria-label={
+                          tracked ? "Untrack project" : "Track project"
+                        }
+                      >
+                        <PushPin
+                          sx={{
+                            fontSize: 20,
+                            transform: tracked ? "none" : "rotate(45deg)",
+                          }}
+                        />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete project">
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setDeleteTarget(project);
+                        }}
+                        sx={{ color: "var(--scratchpad-text-muted)" }}
+                        aria-label="Delete project"
+                      >
+                        <DeleteOutline sx={{ fontSize: 20 }} />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
                 </TableCell>
               </TableRow>
             );
@@ -809,6 +859,38 @@ export default function ProjectHome() {
           </Button>
         </Box>
       </Box>
+
+      <Dialog
+        open={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        aria-labelledby="delete-project-dialog-title"
+        aria-describedby="delete-project-dialog-description"
+      >
+        <DialogTitle id="delete-project-dialog-title">Delete project?</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-project-dialog-description">
+            {deleteTarget
+              ? `"${deleteTarget.projectName}" will be removed. All tasks, blockers, questions, and links for this project will be deleted. This cannot be undone.`
+              : ""}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteTarget(null)}>Cancel</Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={() => {
+              if (deleteTarget) {
+                deleteProjectWithCascade(deleteTarget.id);
+                showSnackbar("success", "Project deleted");
+              }
+              setDeleteTarget(null);
+            }}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <CreateProjectDialog
         open={dialogOpen}

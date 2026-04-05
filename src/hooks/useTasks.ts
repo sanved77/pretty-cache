@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { Task } from '../types/projects'
 
 import { readTrackedStorage, writeTrackedTask } from '../utils/trackedStorage'
 import { storageEvents } from '../utils/storageEvents'
+import * as SearchIndex from '../search/SearchIndexManager'
 
 const STORAGE_KEY = 'tasks'
 
@@ -128,6 +129,43 @@ function collectTaskAndDescendantIds(taskId: string, tasks: Task[]): Set<string>
   return set
 }
 
+/** Post-order: each child's subtree first (nested subtasks included), then the task itself */
+function postOrderTaskIds(rootId: string, tasks: Task[]): string[] {
+  const task = tasks.find((t) => t.id === rootId)
+  if (!task) return [rootId]
+  const out: string[] = []
+  for (const childId of task.subTasks ?? []) {
+    out.push(...postOrderTaskIds(childId, tasks))
+  }
+  out.push(rootId)
+  return out
+}
+
+/**
+ * Task ids that will receive a completion log, in post-order (deepest descendants first, root last).
+ * Skips tasks already completed or archived — only newly completed work is logged.
+ */
+function getNewlyCompletedTaskIdsForLogs(
+  taskId: string,
+  completeSubtasks: boolean,
+  tasks: Task[],
+): string[] {
+  const candidates = completeSubtasks
+    ? Array.from(collectTaskAndDescendantIds(taskId, tasks))
+    : [taskId]
+  const newly = candidates.filter((id) => {
+    const t = tasks.find((x) => x.id === id)
+    return t != null && !(t.isArchived ?? false) && t.completedOn == null
+  })
+  if (newly.length === 0) return []
+  if (!completeSubtasks || newly.length === 1) {
+    return newly
+  }
+  const fullOrder = postOrderTaskIds(taskId, tasks)
+  const set = new Set(newly)
+  return fullOrder.filter((id) => set.has(id))
+}
+
 function findParentTaskId(taskId: string, tasks: Task[]): string | null {
   for (const t of tasks) {
     if (t.subTasks?.includes(taskId)) return t.id
@@ -171,6 +209,7 @@ export function useTasks(): {
   addTask: (params: { content: string; parentTaskId?: string; projectId: string }) => void
   updateTask: (taskId: string, content: string) => void
   deleteTask: (taskId: string) => void
+  removeTasksForProject: (projectId: string) => void
   moveTask: (draggedTaskId: string, newParentTaskId: string | null) => void
   archiveTask: (taskId: string, archived?: boolean) => void
   duplicateTask: (taskId: string) => void
@@ -179,6 +218,8 @@ export function useTasks(): {
 } {
   const [tasks, setTasks] = useState<Task[]>(() => getTasksFromStorage() ?? getFakeTasks())
   const [trackedTaskId, setTrackedTaskId] = useState<string>(() => getTrackedFromStorage())
+  const tasksRef = useRef(tasks)
+  tasksRef.current = tasks
 
   useEffect(() => {
     const stored = getTasksFromStorage()
@@ -197,22 +238,39 @@ export function useTasks(): {
 
   const setTaskComplete = useCallback((taskId: string, isComplete: boolean, completeSubtasks: boolean = false) => {
     if (isComplete) {
-      storageEvents.publish({ type: 'task-completed', content: { id: taskId, contentType: 'task' }, timestamp: Date.now() })
+      const idsToRemove = completeSubtasks
+        ? Array.from(collectTaskAndDescendantIds(taskId, tasksRef.current))
+        : [taskId]
+      for (const id of idsToRemove) SearchIndex.remove(id)
+
+      const logIds = getNewlyCompletedTaskIdsForLogs(
+        taskId,
+        completeSubtasks,
+        tasksRef.current,
+      )
+      let ts = Date.now()
+      for (const id of logIds) {
+        storageEvents.publish({
+          type: 'task-completed',
+          content: { id, contentType: 'task' },
+          timestamp: ts,
+        })
+        ts += 1
+      }
     }
     setTasks((prev) => {
-      const taskIds = [taskId];
-      if (completeSubtasks) {
-        taskIds.push(...collectTaskAndDescendantIds(taskId, prev))
-      }
+      const taskIds = completeSubtasks
+        ? Array.from(collectTaskAndDescendantIds(taskId, prev))
+        : [taskId]
+      const now = Date.now()
       return prev.map((t) => {
         if (!taskIds.includes(t.id) || (t.isArchived ?? false)) return t
         return {
           ...t,
-          completedOn: isComplete ? Date.now() : undefined,
+          completedOn: isComplete ? now : undefined,
         }
       })
-    }
-    )
+    })
   }, [])
 
   const addTask = useCallback(
@@ -225,6 +283,20 @@ export function useTasks(): {
         subTasks: [],
       }
       storageEvents.publish({ type: 'task-added', content: { id: newTask.id, contentType: 'task' }, timestamp: Date.now(), contentText: newTask.content })
+      if (parentTaskId == null) {
+        const projects: Array<{ id: string; projectName: string }> = (() => {
+          try { return JSON.parse(localStorage.getItem('projects') ?? '[]') } catch { return [] }
+        })()
+        const project = projects.find((p) => p.id === projectId)
+        SearchIndex.add({
+          id: newTask.id,
+          type: 'task',
+          content: newTask.content,
+          route: `/projects/${projectId}`,
+          meta: project?.projectName,
+          projectSource: projectId,
+        })
+      }
       setTasks((prev) => {
         const next = [...prev, newTask]
         if (parentTaskId != null) {
@@ -246,6 +318,8 @@ export function useTasks(): {
   }, [])
 
   const deleteTask = useCallback((taskId: string) => {
+    const toRemoveFromIndex = collectTaskAndDescendantIds(taskId, tasksRef.current)
+    for (const id of toRemoveFromIndex) SearchIndex.remove(id)
     setTasks((prev) => {
       const toDelete = collectTaskAndDescendantIds(taskId, prev)
       setTrackedTaskId((cur) => (toDelete.has(cur) ? '' : cur))
@@ -254,6 +328,26 @@ export function useTasks(): {
         .map((t) => ({
           ...t,
           subTasks: t.subTasks?.filter((id) => !toDelete.has(id)) ?? [],
+        }))
+    })
+  }, [])
+
+  const removeTasksForProject = useCallback((projectId: string) => {
+    const taskIds = tasksRef.current
+      .filter((t) => t.projectID === projectId)
+      .map((t) => t.id)
+    for (const id of taskIds) SearchIndex.remove(id)
+    setTasks((prev) => {
+      const toRemove = new Set(
+        prev.filter((t) => t.projectID === projectId).map((t) => t.id),
+      )
+      if (toRemove.size === 0) return prev
+      setTrackedTaskId((cur) => (toRemove.has(cur) ? '' : cur))
+      return prev
+        .filter((t) => t.projectID !== projectId)
+        .map((t) => ({
+          ...t,
+          subTasks: t.subTasks?.filter((id) => !toRemove.has(id)) ?? [],
         }))
     })
   }, [])
@@ -289,6 +383,10 @@ export function useTasks(): {
   )
 
   const archiveTask = useCallback((taskId: string, archived: boolean = true) => {
+    if (archived) {
+      const ids = collectTaskAndDescendantIds(taskId, tasksRef.current)
+      for (const id of ids) SearchIndex.remove(id)
+    }
     setTasks((prev) => {
       const toArchive = collectTaskAndDescendantIds(taskId, prev)
       return prev.map((t) => (toArchive.has(t.id) ? { ...t, isArchived: archived } : t))
@@ -340,6 +438,7 @@ export function useTasks(): {
     addTask,
     updateTask,
     deleteTask,
+    removeTasksForProject,
     moveTask,
     archiveTask,
     duplicateTask,

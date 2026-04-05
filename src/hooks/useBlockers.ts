@@ -63,5 +63,16 @@ export function useBlockers() {
     )
   }, [])
 
-  return { blockers, getBlockersForProject, addBlocker, dismissBlocker, undismissBlocker }
+  const removeBlockersForProject = useCallback((projectId: string) => {
+    setBlockers((prev) => prev.filter((b) => b.projectId !== projectId))
+  }, [])
+
+  return {
+    blockers,
+    getBlockersForProject,
+    addBlocker,
+    dismissBlocker,
+    undismissBlocker,
+    removeBlockersForProject,
+  }
 }

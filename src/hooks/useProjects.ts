@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { LinkObj, Project, ProjectStatus } from '../types/projects'
 import { readTrackedStorage, writeTrackedLinks, writeTrackedProjects } from '../utils/trackedStorage'
 import { storageEvents } from '../utils/storageEvents'
+import * as SearchIndex from '../search/SearchIndexManager'
 
 const STORAGE_KEY = 'projects'
 
@@ -85,8 +86,11 @@ export function useProjects(): {
     description: string,
     deadlineOnMs?: number,
   ) => string
+  deleteProject: (projectId: string) => void
 } {
   const [projects, setProjects] = useState<Project[]>(() => getProjectsFromStorage() ?? [])
+  const projectsRef = useRef(projects)
+  projectsRef.current = projects
   const [trackedProjectIds, setTrackedProjectIds] = useState<string[]>(
     () => readTrackedStorage().projects ?? [],
   )
@@ -156,14 +160,29 @@ export function useProjects(): {
   }, [])
 
   const addLink = useCallback((projectId: string, link: { label: string; url: string; type?: string }) => {
-    setProjects((prev) =>
-      prev.map((p) => {
+    const linkId = crypto.randomUUID()
+    setProjects((prev) => {
+      const project = prev.find((p) => p.id === projectId)
+      if (project) {
+        let host: string | undefined
+        try { host = link.url && link.url !== '#' ? new URL(link.url).hostname : undefined } catch { /* */ }
+        const metaParts = [host, project.projectName].filter(Boolean)
+        SearchIndex.add({
+          id: linkId,
+          type: 'link',
+          content: link.label,
+          hyperlink: link.url,
+          meta: metaParts.join(' · '),
+          projectSource: projectId,
+        })
+      }
+      return prev.map((p) => {
         if (p.id !== projectId) return p
-        const newLink = { ...link, id: crypto.randomUUID(), visits: 0 }
+        const newLink = { ...link, id: linkId, visits: 0 }
         const links = [...(p.links ?? []), newLink]
         return { ...p, links }
       })
-    )
+    })
   }, [])
 
   const updateLink = useCallback(
@@ -195,6 +214,7 @@ export function useProjects(): {
   }, [])
 
   const deleteLink = useCallback((projectId: string, linkId: string) => {
+    SearchIndex.remove(linkId)
     setProjects((prev) =>
       prev.map((p) => {
         if (p.id !== projectId) return p
@@ -206,6 +226,19 @@ export function useProjects(): {
   }, [])
 
   const updateProjectName = useCallback((projectId: string, projectName: string) => {
+    const old = SearchIndex.getAll().find((e) => e.id === projectId)
+    if (old) {
+      SearchIndex.remove(projectId)
+      SearchIndex.add({ ...old, content: projectName })
+      const children = SearchIndex.getAll().filter((e) => e.projectSource === projectId)
+      for (const child of children) {
+        SearchIndex.remove(child.id)
+        const metaParts = (child.meta ?? '').split(' · ')
+        if (metaParts.length > 1) metaParts[metaParts.length - 1] = projectName
+        else metaParts.push(projectName)
+        SearchIndex.add({ ...child, meta: metaParts.join(' · ') })
+      }
+    }
     setProjects((prev) => prev.map((p) => (p.id === projectId ? { ...p, projectName } : p)))
   }, [])
 
@@ -221,6 +254,16 @@ export function useProjects(): {
     setProjects((prev) =>
       prev.map((p) => (p.id === projectId ? { ...p, deadlineOn } : p)),
     )
+  }, [])
+
+  const deleteProject = useCallback((projectId: string) => {
+    const project = projectsRef.current.find((p) => p.id === projectId)
+    if (!project) return
+    SearchIndex.removeByProject(projectId)
+    const linkIdSet = new Set((project.links ?? []).map((l) => l.id))
+    setTrackedProjectIds((prev) => prev.filter((id) => id !== projectId))
+    setTrackedLinkIds((prev) => prev.filter((id) => !linkIdSet.has(id)))
+    setProjects((prev) => prev.filter((p) => p.id !== projectId))
   }, [])
 
   const createProject = useCallback(
@@ -244,6 +287,13 @@ export function useProjects(): {
       }
       setProjects((prev) => [...prev, newProject])
       storageEvents.publish({ type: 'project-created', content: { id, contentType: 'project' }, timestamp: Date.now(), contentText: name })
+      SearchIndex.add({
+        id,
+        type: 'project',
+        content: name,
+        route: `/projects/${id}`,
+        meta: 'Open',
+      })
       return id
     },
     [],
@@ -268,5 +318,6 @@ export function useProjects(): {
     updateProjectStatus,
     updateProjectDeadline,
     createProject,
+    deleteProject,
   }
 }
