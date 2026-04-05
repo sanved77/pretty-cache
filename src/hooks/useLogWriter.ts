@@ -18,7 +18,7 @@ function readLogs(): LogEntry[] {
 
 function writeLogs(logs: LogEntry[]) {
   localStorage.setItem(LOGS_KEY, JSON.stringify(logs))
-  window.dispatchEvent(new CustomEvent('missioncontrol-logs-updated'))
+  window.dispatchEvent(new CustomEvent('prettycache-logs-updated'))
 }
 
 function lookupContent(id: string, contentType: string): string {

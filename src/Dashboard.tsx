@@ -15,7 +15,7 @@ function createResizeHandle() {
   return (handleAxis: string, ref: Ref<HTMLElement>) => (
     <span
       ref={ref as Ref<HTMLSpanElement>}
-      className={`react-resizable-handle react-resizable-handle-${handleAxis} mission-control-resize-handle`}
+      className={`react-resizable-handle react-resizable-handle-${handleAxis} prettycache-resize-handle`}
       style={{
         display: 'block',
         width: '8px',

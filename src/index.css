@@ -8,14 +8,14 @@ body {
 }
 
 /* Resize handle: full-height vertical strip only, no default diagonal graphic */
-.mission-control-resize-handle {
+.prettycache-resize-handle {
   background-image: none !important;
   background: none !important;
   padding: 0 !important;
   transition: background-color 0.15s ease;
 }
-.mission-control-resize-handle.react-resizable-handle-e,
-.mission-control-resize-handle.react-resizable-handle-w {
+.prettycache-resize-handle.react-resizable-handle-e,
+.prettycache-resize-handle.react-resizable-handle-w {
   top: 0 !important;
   bottom: 0 !important;
   margin-top: 0 !important;
@@ -23,6 +23,6 @@ body {
   width: 8px !important;
   transform: none !important;
 }
-.mission-control-resize-handle:hover {
+.prettycache-resize-handle:hover {
   background-color: var(--resize-handle-hover);
 }

@@ -75,5 +75,9 @@ export function useToday() {
     )
   }, [])
 
-  return { items, addItem, toggleItem }
+  const removeItem = useCallback((id: string) => {
+    setItems((prev) => prev.filter((item) => item.id !== id))
+  }, [])
+
+  return { items, addItem, toggleItem, removeItem }
 }

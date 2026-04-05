@@ -21,6 +21,7 @@ import Edit from "@mui/icons-material/Edit";
 import Check from "@mui/icons-material/Check";
 import CalendarMonth from "@mui/icons-material/CalendarMonth";
 import Clear from "@mui/icons-material/Clear";
+import PushPin from "@mui/icons-material/PushPin";
 import { useTasks } from "../../../../hooks/useTasks";
 import { useProjects } from "../../../../hooks/useProjects";
 import { useBlockers } from "../../../../hooks/useBlockers";
@@ -84,6 +85,8 @@ export default function Projects() {
     deleteLink,
     isLinkTracked,
     toggleTrackedLink,
+    toggleTrackedProject,
+    isProjectTracked,
     updateProjectName,
     updateProjectDescription,
     updateProjectStatus,
@@ -321,6 +324,44 @@ export default function Projects() {
                       <Edit fontSize="small" />
                     </IconButton>
                   </Box>
+                  <Tooltip
+                    title={
+                      isProjectTracked(selectedProjectId)
+                        ? "Untrack project"
+                        : "Track project"
+                    }
+                  >
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        const wasTracked = isProjectTracked(selectedProjectId);
+                        toggleTrackedProject(selectedProjectId);
+                        showSnackbar(
+                          "success",
+                          wasTracked ? "Project untracked" : "Project tracked",
+                        );
+                      }}
+                      sx={{
+                        color: isProjectTracked(selectedProjectId)
+                          ? "var(--projects-metric-color)"
+                          : "var(--scratchpad-text-muted)",
+                        visibility: isHeaderHovered || isProjectTracked(selectedProjectId)
+                          ? "visible"
+                          : "hidden",
+                      }}
+                      aria-label="Toggle track project"
+                    >
+                      <PushPin
+                        sx={{
+                          fontSize: 20,
+                          transform: isProjectTracked(selectedProjectId)
+                            ? "none"
+                            : "rotate(45deg)",
+                          transition: "transform 0.15s",
+                        }}
+                      />
+                    </IconButton>
+                  </Tooltip>
                 </Box>
               )}
 

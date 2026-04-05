@@ -100,17 +100,17 @@ export function useProjects(): {
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(projects))
-    window.dispatchEvent(new CustomEvent('missioncontrol-projects-updated'))
+    window.dispatchEvent(new CustomEvent('prettycache-projects-updated'))
   }, [projects])
 
   useEffect(() => {
     writeTrackedProjects(trackedProjectIds)
-    window.dispatchEvent(new CustomEvent('missioncontrol-projects-updated'))
+    window.dispatchEvent(new CustomEvent('prettycache-projects-updated'))
   }, [trackedProjectIds])
 
   useEffect(() => {
     writeTrackedLinks(trackedLinkIds)
-    window.dispatchEvent(new CustomEvent('missioncontrol-projects-updated'))
+    window.dispatchEvent(new CustomEvent('prettycache-projects-updated'))
   }, [trackedLinkIds])
 
   const toggleTrackedProject = useCallback((projectId: string) => {

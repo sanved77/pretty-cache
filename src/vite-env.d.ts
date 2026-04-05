@@ -1,11 +1,11 @@
 /// <reference types="vite/client" />
 
-import type { MissionControlStorageExport } from './dev/missionControlStorage'
+import type { PrettyCacheStorageExport } from './dev/prettyCacheStorage'
 
 declare global {
   interface Window {
-    missionControl?: {
-      export: () => MissionControlStorageExport
+    prettyCache?: {
+      export: () => PrettyCacheStorageExport
       importData: (data: unknown) => void
     }
   }

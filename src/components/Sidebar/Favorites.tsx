@@ -82,8 +82,8 @@ export default function Favorites() {
       setTrackedProjects(readTrackedProjectsSnapshot())
       setFavoriteLinks(readTrackedFavoriteLinksSnapshot())
     }
-    window.addEventListener('missioncontrol-projects-updated', onUpdate)
-    return () => window.removeEventListener('missioncontrol-projects-updated', onUpdate)
+    window.addEventListener('prettycache-projects-updated', onUpdate)
+    return () => window.removeEventListener('prettycache-projects-updated', onUpdate)
   }, [])
 
   const handleCloseContextMenu = useCallback(() => setContextMenu(null), [])

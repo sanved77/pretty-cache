@@ -3,10 +3,10 @@ import { Box, Button, TextField, Typography } from '@mui/material'
 import {
   USER_FULL_NAME_KEY,
   USER_NAME_CHANGED_EVENT,
-  downloadMissionControlExport,
-  validateMissionControlImport,
-  applyMissionControlImport,
-} from '../../../../dev/missionControlStorage'
+  downloadPrettyCacheExport,
+  validatePrettyCacheImport,
+  applyPrettyCacheImport,
+} from '../../../../dev/prettyCacheStorage'
 import { cardSx } from '../../../../styles/cardSx'
 import { SECTION_HEADER_COLORS } from '../../../../styles/sectionHeaderSx'
 import SectionTitle from '../../../shared/SectionTitle'
@@ -27,7 +27,7 @@ export default function Settings() {
 
   const handleExport = () => {
     try {
-      downloadMissionControlExport()
+      downloadPrettyCacheExport()
       showSnackbar('success', 'Export downloaded')
     } catch {
       showSnackbar('error', 'Export failed')
@@ -43,12 +43,12 @@ export default function Settings() {
     reader.onload = () => {
       try {
         const parsed = JSON.parse(reader.result as string) as unknown
-        const result = validateMissionControlImport(parsed)
+        const result = validatePrettyCacheImport(parsed)
         if (!result.ok) {
           showSnackbar('error', result.error)
           return
         }
-        applyMissionControlImport(result.data)
+        applyPrettyCacheImport(result.data)
       } catch {
         showSnackbar('error', 'Could not read or parse the file')
       }
@@ -100,7 +100,7 @@ export default function Settings() {
       <Box sx={cardSx}>
         <SectionTitle color={SECTION_HEADER_COLORS.allProjectsHome}>Data</SectionTitle>
         <Typography sx={{ color: 'var(--scratchpad-text-muted)', mb: 2, fontSize: '0.875rem' }}>
-          Export or import all Mission Control data for this browser (projects, tasks, logs,
+          Export or import all PrettyCache data for this browser (projects, tasks, logs,
           preferences, and more).
         </Typography>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, alignItems: 'center' }}>

@@ -30,7 +30,7 @@ function readLogs(): LogEntry[] {
 
 function writeLogs(logs: LogEntry[]) {
   localStorage.setItem(LOGS_KEY, JSON.stringify(logs))
-  window.dispatchEvent(new CustomEvent('missioncontrol-logs-updated'))
+  window.dispatchEvent(new CustomEvent('prettycache-logs-updated'))
 }
 
 function LogHeader({
@@ -419,8 +419,8 @@ export default function LogBoard() {
 
   useEffect(() => {
     const handler = () => setLogs(readLogs())
-    window.addEventListener('missioncontrol-logs-updated', handler)
-    return () => window.removeEventListener('missioncontrol-logs-updated', handler)
+    window.addEventListener('prettycache-logs-updated', handler)
+    return () => window.removeEventListener('prettycache-logs-updated', handler)
   }, [])
 
   const handleManualEntry = useCallback((text: string) => {

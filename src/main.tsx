@@ -13,14 +13,14 @@ import './styles/variables.css'
 import './index.css'
 import App from './App.tsx'
 import {
-  exportMissionControlStorage,
-  importMissionControlStorage,
-} from './dev/missionControlStorage'
+  exportPrettyCacheStorage,
+  importPrettyCacheStorage,
+} from './dev/prettyCacheStorage'
 
 if (import.meta.env.DEV) {
-  window.missionControl = {
-    export: exportMissionControlStorage,
-    importData: importMissionControlStorage,
+  window.prettyCache = {
+    export: exportPrettyCacheStorage,
+    importData: importPrettyCacheStorage,
   }
 }
 

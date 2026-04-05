@@ -1,6 +1,6 @@
-# Mission Control — localStorage schema
+# PrettyCache — localStorage schema
 
-Reference for all keys persisted in the browser’s `localStorage`, aligned with export/import ([`src/dev/missionControlStorage.ts`](../src/dev/missionControlStorage.ts)) and app hooks.
+Reference for all keys persisted in the browser’s `localStorage`, aligned with export/import ([`src/dev/prettyCacheStorage.ts`](../src/dev/prettyCacheStorage.ts)) and app hooks.
 
 ## Keys overview
 
@@ -176,16 +176,16 @@ interface TodayItem {
 ## `userFullName`
 
 - Stored as a **raw string**, not `JSON.stringify`.
-- Used for the Today greeting and Settings; import writes with `localStorage.setItem('userFullName', string)` ([`missionControlStorage.ts`](../src/dev/missionControlStorage.ts)).
+- Used for the Today greeting and Settings; import writes with `localStorage.setItem('userFullName', string)` ([`prettyCacheStorage.ts`](../src/dev/prettyCacheStorage.ts)).
 
 ---
 
 ## Export envelope (version 1)
 
-Shape produced by [`exportMissionControlStorage`](../src/dev/missionControlStorage.ts):
+Shape produced by [`exportPrettyCacheStorage`](../src/dev/prettyCacheStorage.ts):
 
 ```ts
-type MissionControlStorageExport = {
+type PrettyCacheStorageExport = {
   version: 1
   exportedAt: number
   userFullName: string
@@ -195,7 +195,7 @@ type MissionControlStorageExport = {
 >
 ```
 
-Import validation: [`validateMissionControlImport`](../src/dev/missionControlStorage.ts) (requires `version === 1`, all JSON keys present, and basic shape checks per key).
+Import validation: [`validatePrettyCacheImport`](../src/dev/prettyCacheStorage.ts) (requires `version === 1`, all JSON keys present, and basic shape checks per key).
 
 ---
 
@@ -203,7 +203,7 @@ Import validation: [`validateMissionControlImport`](../src/dev/missionControlSto
 
 | Area | File |
 |------|------|
-| Export/import keys & validation | [`src/dev/missionControlStorage.ts`](../src/dev/missionControlStorage.ts) |
-| Dev console API | [`src/main.tsx`](../src/main.tsx) (`window.missionControl`) |
+| Export/import keys & validation | [`src/dev/prettyCacheStorage.ts`](../src/dev/prettyCacheStorage.ts) |
+| Dev console API | [`src/main.tsx`](../src/main.tsx) (`window.prettyCache`) |
 
 When adding new persisted keys, update `JSON_STORAGE_KEYS`, hooks, and this document.

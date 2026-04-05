@@ -95,5 +95,5 @@ export function pushRecentLink(linkId: string): void {
     recents,
   }
   localStorage.setItem(TRACKED_STORAGE_KEY, JSON.stringify(payload))
-  window.dispatchEvent(new CustomEvent('missioncontrol-projects-updated'))
+  window.dispatchEvent(new CustomEvent('prettycache-projects-updated'))
 }

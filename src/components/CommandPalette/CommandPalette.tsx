@@ -24,7 +24,7 @@ import FileUploadIcon from '@mui/icons-material/FileUpload'
 import LinkIcon from '@mui/icons-material/Link'
 import TaskAltIcon from '@mui/icons-material/TaskAlt'
 import StarIcon from '@mui/icons-material/Star'
-import { downloadMissionControlExport } from '../../dev/missionControlStorage'
+import { downloadPrettyCacheExport } from '../../dev/prettyCacheStorage'
 import { getAll, type SearchIndexEntry } from '../../search/SearchIndexManager'
 
 export const OPEN_COMMAND_PALETTE_EVENT = 'open-command-palette'
@@ -250,7 +250,7 @@ export default function CommandPalette() {
         case 'action-export-backup':
           navigate('/settings')
           setTimeout(() => {
-            try { downloadMissionControlExport() } catch { /* handled by Settings */ }
+            try { downloadPrettyCacheExport() } catch { /* handled by Settings */ }
           }, 200)
           break
         case 'action-import':
