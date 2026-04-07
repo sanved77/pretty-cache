@@ -203,18 +203,50 @@ export default function Projects() {
           height: "100%",
           backgroundColor: "var(--projects-bg)",
           color: "var(--scratchpad-text)",
-          p: 2,
+          p: 3,
+          boxSizing: "border-box",
         }}
       >
-        <Typography variant="h6" sx={{ mb: 2 }}>
-          Project not found
-        </Typography>
-        <Link
-          to="/projects"
-          style={{ color: "var(--projects-metric-color)" }}
-        >
-          Back to Projects
-        </Link>
+        <Box sx={{ maxWidth: 420, textAlign: "center" }}>
+          <Typography
+            component="p"
+            sx={{
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: "var(--scratchpad-text-muted)",
+              mb: 1,
+            }}
+          >
+            404
+          </Typography>
+          <Typography variant="h5" sx={{ fontWeight: 600, mb: 1.5 }}>
+            Project not found
+          </Typography>
+          <Typography
+            sx={{
+              color: "var(--scratchpad-text-muted)",
+              fontSize: "0.875rem",
+              lineHeight: 1.5,
+              mb: 3,
+            }}
+          >
+            Nothing is saved under this ID in this browser. The link may be wrong, or the
+            project may have been deleted.
+          </Typography>
+          <Button
+            variant="contained"
+            component={Link}
+            to="/projects"
+            sx={{
+              bgcolor: "var(--projects-metric-color)",
+              "&:hover": { bgcolor: "var(--projects-metric-color)", opacity: 0.92 },
+            }}
+          >
+            Back to all projects
+          </Button>
+        </Box>
       </Box>
     );
   }

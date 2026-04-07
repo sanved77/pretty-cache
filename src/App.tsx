@@ -8,6 +8,7 @@ import { Projects, ProjectHome } from './components/Main/Activities/Projects'
 import Today from './components/Main/Activities/Today/Today'
 import { Settings } from './components/Main/Activities/Settings'
 import CommandPalette from './components/CommandPalette/CommandPalette'
+import NotFoundPage from './components/NotFoundPage'
 import { seedSearchIndex } from './search/seedSearchIndex'
 import SmallScreenGate from './components/SmallScreenGate'
 
@@ -34,7 +35,7 @@ function App() {
       <SnackbarProviderWrapper>
         <CommandPalette />
         <Routes>
-          <Route path="/" element={<Dashboard />}>
+          <Route path="/*" element={<Dashboard />}>
             <Route index element={<Today />} />
             <Route path="scratchpad" element={<ScratchPad />} />
             <Route path="settings" element={<Settings />} />
@@ -42,6 +43,7 @@ function App() {
               <Route index element={<ProjectHome />} />
               <Route path=":projectId" element={<ProjectsRoute />} />
             </Route>
+            <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>
       </SnackbarProviderWrapper>
