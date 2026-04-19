@@ -10,16 +10,27 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  IconButton,
+  List,
+  ListItemButton,
+  ListItemText,
+  Popover,
   Typography,
 } from "@mui/material";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import SwapVert from "@mui/icons-material/SwapVert";
 import type { Task } from "../../../../types/projects";
-import { isCompleted } from "../../../../utils/taskCompletion";
 import {
   getProjectCompletion,
   getProjectTaskIds,
 } from "../../../../utils/projectCompletion";
+import {
+  readTaskListSortOrder,
+  sortTasksIncompleteFirst,
+  writeTaskListSortOrder,
+  type TaskCreatedSortOrder,
+} from "../../../../utils/taskSort";
 import { useSnackbarContext } from "../../../../contexts/useSnackbarContext";
 import { useTaskActions } from "./useTaskActions";
 import { TaskAddModeContext } from "./TaskAddModeContext";
@@ -39,19 +50,6 @@ function getRootTasks(tasks: Task[], projectId: string): Task[] {
     for (const id of t.subTasks ?? []) childIds.add(id);
   }
   return filtered.filter((t) => !childIds.has(t.id));
-}
-
-function sortTasksIncompleteFirst(
-  tasks: Task[],
-  taskMap: Map<string, Task>,
-): Task[] {
-  const incomplete = tasks
-    .filter((t) => isCompleted(t, taskMap) === "incomplete")
-    .sort((a, b) => a.createdOn - b.createdOn);
-  const complete = tasks
-    .filter((t) => isCompleted(t, taskMap) !== "incomplete")
-    .sort((a, b) => a.createdOn - b.createdOn);
-  return [...incomplete, ...complete];
 }
 
 export interface TasksPanelProps {
@@ -120,6 +118,17 @@ export default function TasksPanel({ tasks, projectId }: TasksPanelProps) {
   const [editTaskId, setEditTaskId] = useState<string | undefined>(undefined);
   const [pendingMove, setPendingMove] = useState<PendingMove>(null);
   const [showArchived, setShowArchived] = useState(false);
+  const [taskSortOrder, setTaskSortOrder] = useState<TaskCreatedSortOrder>(
+    () => readTaskListSortOrder(),
+  );
+  const [sortAnchorEl, setSortAnchorEl] = useState<HTMLElement | null>(null);
+  const sortPopoverOpen = Boolean(sortAnchorEl);
+
+  const setSortOrder = (order: TaskCreatedSortOrder) => {
+    setTaskSortOrder(order);
+    writeTaskListSortOrder(order);
+    setSortAnchorEl(null);
+  };
   const nonArchivedTasks = useMemo(
     () => tasks.filter((t) => !t.isArchived),
     [tasks],
@@ -131,8 +140,8 @@ export default function TasksPanel({ tasks, projectId }: TasksPanelProps) {
     [tasksForDisplay, projectId],
   );
   const sortedRoots = useMemo(
-    () => sortTasksIncompleteFirst(rootTasks, taskMap),
-    [rootTasks, taskMap],
+    () => sortTasksIncompleteFirst(rootTasks, taskMap, taskSortOrder),
+    [rootTasks, taskMap, taskSortOrder],
   );
   const { completed, total } = useMemo(
     () => getProjectCompletion(nonArchivedTasks, projectId, taskMap),
@@ -202,6 +211,60 @@ export default function TasksPanel({ tasks, projectId }: TasksPanelProps) {
             Tasks
           </Typography>
           <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+            <IconButton
+              size="small"
+              aria-label="Sort tasks by date"
+              onClick={(e) => setSortAnchorEl(e.currentTarget)}
+              sx={{ color: "var(--scratchpad-text-muted)" }}
+            >
+              <SwapVert fontSize="small" />
+            </IconButton>
+            <Popover
+              open={sortPopoverOpen}
+              anchorEl={sortAnchorEl}
+              onClose={() => setSortAnchorEl(null)}
+              anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+              transformOrigin={{ vertical: "top", horizontal: "left" }}
+              slotProps={{
+                paper: {
+                  sx: {
+                    bgcolor: "var(--scratchpad-toolbar-bg)",
+                    border: "1px solid var(--scratchpad-separator)",
+                  },
+                },
+              }}
+            >
+              <List dense sx={{ py: 0.5, minWidth: 200 }}>
+                <ListItemButton
+                  selected={taskSortOrder === "newest"}
+                  onClick={() => setSortOrder("newest")}
+                  sx={{
+                    "&.Mui-selected": {
+                      bgcolor: "var(--sidebar-selected-bg)",
+                    },
+                  }}
+                >
+                  <ListItemText
+                    primary="Newest first"
+                    primaryTypographyProps={{ fontSize: "0.875rem" }}
+                  />
+                </ListItemButton>
+                <ListItemButton
+                  selected={taskSortOrder === "oldest"}
+                  onClick={() => setSortOrder("oldest")}
+                  sx={{
+                    "&.Mui-selected": {
+                      bgcolor: "var(--sidebar-selected-bg)",
+                    },
+                  }}
+                >
+                  <ListItemText
+                    primary="Oldest first"
+                    primaryTypographyProps={{ fontSize: "0.875rem" }}
+                  />
+                </ListItemButton>
+              </List>
+            </Popover>
             <Chip
               label={`${activeCount} Active`}
               size="small"
@@ -286,6 +349,7 @@ export default function TasksPanel({ tasks, projectId }: TasksPanelProps) {
                   key={task.id}
                   task={task}
                   taskMap={taskMap}
+                  taskSortOrder={taskSortOrder}
                   onDrop={handleDrop}
                   showArchived={showArchived}
                   projectId={projectId}

@@ -53,7 +53,6 @@ export default function Favorites() {
   const {
     deleteLink,
     updateLink,
-    isLinkTracked,
     toggleTrackedLink,
     incrementLinkVisits,
   } = useProjects()
@@ -249,7 +248,8 @@ export default function Favorites() {
         onEdit={handleEditFromMenu}
         onDelete={handleDeleteFromMenu}
         isFavorite={
-          contextMenu != null ? isLinkTracked(contextMenu.link.id) : false
+          contextMenu != null &&
+          favoriteLinks.some((r) => r.linkId === contextMenu.link.id)
         }
         onFavoriteToggle={() => {
           if (contextMenu != null) {

@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useMemo, useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { motion } from "framer-motion";
 import {
@@ -17,6 +17,10 @@ import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import IndeterminateCheckBoxIcon from "@mui/icons-material/IndeterminateCheckBox";
 import type { Task } from "../../../../types/projects";
 import { isCompleted } from "../../../../utils/taskCompletion";
+import {
+  sortTasksIncompleteFirst,
+  type TaskCreatedSortOrder,
+} from "../../../../utils/taskSort";
 import { useSnackbarContext } from "../../../../contexts/useSnackbarContext";
 import { useTaskActions } from "./useTaskActions";
 import { TaskAddModeContext } from "./TaskAddModeContext";
@@ -49,25 +53,10 @@ function getTaskCompletionPercent(
   return { completed, total };
 }
 
-function sortChildTasks(
-  subTaskIds: string[],
-  taskMap: Map<string, Task>,
-): Task[] {
-  const tasks = subTaskIds
-    .map((id) => taskMap.get(id))
-    .filter((t): t is Task => t != null);
-  const incomplete = tasks
-    .filter((t) => isCompleted(t, taskMap) === 'incomplete')
-    .sort((a, b) => a.createdOn - b.createdOn);
-  const complete = tasks
-    .filter((t) => isCompleted(t, taskMap) !== 'incomplete')
-    .sort((a, b) => a.createdOn - b.createdOn);
-  return [...incomplete, ...complete];
-}
-
 export interface TaskItemProps {
   task: Task;
   taskMap: Map<string, Task>;
+  taskSortOrder: TaskCreatedSortOrder;
   indentLevel?: number;
   onDrop?: (draggedTaskId: string, targetTaskId: string) => void;
   showArchived?: boolean;
@@ -77,6 +66,7 @@ export interface TaskItemProps {
 export default function TaskItem({
   task,
   taskMap,
+  taskSortOrder,
   indentLevel = 0,
   onDrop,
   showArchived = false,
@@ -139,7 +129,12 @@ export default function TaskItem({
       ? `${Math.round(percent)}% complete`
       : null
     : null;
-  const sortedChildren = sortChildTasks(subTaskIds, taskMap);
+  const sortedChildren = useMemo(() => {
+    const childTasks = subTaskIds
+      .map((id) => taskMap.get(id))
+      .filter((t): t is Task => t != null);
+    return sortTasksIncompleteFirst(childTasks, taskMap, taskSortOrder);
+  }, [subTaskIds.join(","), taskMap, taskSortOrder]);
   const archived = task.isArchived ?? false;
   const showAddIcon = isHovered && addMode?.setTaskAddMode && !isEditMode;
   const showArchiveButton = isHovered && !isEditMode;
@@ -359,6 +354,7 @@ export default function TaskItem({
           key={childTask.id}
           task={childTask}
           taskMap={taskMap}
+          taskSortOrder={taskSortOrder}
           indentLevel={indentLevel + 1}
           onDrop={onDrop}
           showArchived={showArchived}

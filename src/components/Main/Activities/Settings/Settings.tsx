@@ -1,5 +1,5 @@
-import { useCallback, useRef, useState } from 'react'
-import { Box, Button, TextField, Typography } from '@mui/material'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Box, Button, LinearProgress, TextField, Typography } from '@mui/material'
 import {
   USER_FULL_NAME_KEY,
   USER_NAME_CHANGED_EVENT,
@@ -18,6 +18,49 @@ export default function Settings() {
   const [name, setName] = useState(
     () => localStorage.getItem(USER_FULL_NAME_KEY) ?? '',
   )
+  const [storageQuota, setStorageQuota] = useState<number | null>(null)
+  const [storageUsage, setStorageUsage] = useState<number | null>(null)
+
+  const localStorageBytes = useMemo(() => {
+    let totalSize = 0
+    for (const key in localStorage) {
+      if (localStorage.hasOwnProperty(key)) {
+        totalSize += new Blob([key]).size + new Blob([localStorage[key]]).size
+      }
+    }
+    return totalSize
+  }, [])
+
+  const usedMb = (localStorageBytes / 1024 / 1024).toFixed(2)
+
+  useEffect(() => {
+    let cancelled = false
+    const run = async () => {
+      try {
+        const est = await navigator.storage?.estimate?.()
+        if (cancelled || !est) return
+        const q = est.quota
+        if (typeof q === 'number' && Number.isFinite(q) && q > 0) {
+          setStorageQuota(q)
+        }
+        const u = est.usage
+        if (typeof u === 'number' && Number.isFinite(u)) {
+          setStorageUsage(u)
+        }
+      } catch {
+        // quota bar omitted
+      }
+    }
+    void run()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const quotaProgressPct =
+    storageQuota != null && storageQuota > 0
+      ? Math.min(100, (localStorageBytes / storageQuota) * 100)
+      : null
 
   const persistName = useCallback(() => {
     const trimmed = name.trim()
@@ -125,6 +168,38 @@ export default function Settings() {
           Import replaces stored data for this site and reloads the page. Use a file exported
           from this app (version 1).
         </Typography>
+      </Box>
+
+      <Box sx={cardSx}>
+        <SectionTitle color={SECTION_HEADER_COLORS.allProjectsHome}>Storage usage</SectionTitle>
+        <Typography sx={{ color: 'var(--scratchpad-text-muted)', mb: 2, fontSize: '0.875rem' }}>
+          Measures all keys in this site&apos;s localStorage (not only PrettyCache). The bar is
+          approximate and compares measured size to the browser-reported quota when available.
+        </Typography>
+        <Typography sx={{ color: 'var(--scratchpad-text)', mb: quotaProgressPct != null ? 1.5 : 0, fontSize: '0.9375rem' }}>
+          Used: {usedMb} MB
+        </Typography>
+        {quotaProgressPct != null && (
+          <LinearProgress
+            variant="determinate"
+            value={quotaProgressPct}
+            sx={{
+              height: 8,
+              borderRadius: 1,
+              mb: storageUsage != null ? 1.5 : 0,
+              bgcolor: 'var(--scratchpad-separator)',
+              '& .MuiLinearProgress-bar': {
+                borderRadius: 1,
+                bgcolor: 'var(--projects-metric-color)',
+              },
+            }}
+          />
+        )}
+        {storageUsage != null && (
+          <Typography sx={{ color: 'var(--scratchpad-text-muted)', fontSize: '0.8125rem' }}>
+            Site storage (browser estimate): {(storageUsage / 1024 / 1024).toFixed(2)} MB
+          </Typography>
+        )}
       </Box>
     </Box>
   )
